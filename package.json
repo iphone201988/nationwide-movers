@@ -1,0 +1,45 @@
+{
+  "name": "nationwide-movers",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "tsc",
+    "start": "tsc && node dist/src/server.js",
+    "test-transform": "ts-node src/scripts/testTransform.ts",
+    "import-realtors": "ts-node src/scripts/importRealtors.ts",
+    "debug-database": "ts-node src/scripts/debugDatabase.ts",
+    "check-mongo": "ts-node src/scripts/checkMongoData.ts",
+    "test-api": "ts-node src/scripts/testAPI.ts",
+    "example-usage": "ts-node src/example-usage.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@types/multer": "^2.0.0",
+    "@types/xlsx": "^0.0.35",
+    "axios": "^1.11.0",
+    "bcryptjs": "^3.0.2",
+    "cheerio": "^1.1.2",
+    "colors": "^1.4.0",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "moment": "^2.30.1",
+    "mongoose": "^8.18.0",
+    "multer": "^2.0.2",
+    "puppeteer": "^24.17.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/mongoose": "^5.11.96",
+    "@types/node": "^24.3.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.9.2"
+  }
+}

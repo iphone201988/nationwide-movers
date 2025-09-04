@@ -1,0 +1,25 @@
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import "dotenv/config";
+
+
+export const hashedPassword = async (password: string): Promise<string> => {
+    return await bcrypt.hash(password, 10);
+};
+
+export const comparePassword = async (
+    plainPassword: string,
+    hashedPassword: string
+): Promise<boolean> => {
+    return await bcrypt.compare(plainPassword, hashedPassword);
+};
+
+export const generateToken = (
+    payload: string | object | Buffer,
+    expiresIn: jwt.SignOptions["expiresIn"] = "7d"
+): string => {
+    return jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn,
+    });
+};
+

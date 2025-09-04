@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "module": "NodeNext",
+    "target": "ES2020",
+    "moduleResolution": "NodeNext",
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "outDir": "dist",
+    "skipLibCheck": true,
+     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "lib": ["ES2020"]
+}
