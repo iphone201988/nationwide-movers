@@ -6,8 +6,9 @@ import { exec } from "child_process";
 import * as cheerio from "cheerio";
 import Listing from "../model/listing.model";
 import Agent from "../model/agent.model";
+import "dotenv/config";
 
-const API_KEY = "SLN1BP9OROCS3JTNEBIEWWBORNQMLM6JB6NX3F0ISK1GDBWJ5IPB8354AACFD2Y69F5B5KBOP3V2PYA9";
+const API_KEY = process.env.API_KEY_SCRAP_BEE;
 const BASE_URL = "https://app.scrapingbee.com/api/v1/";
 
 // export const scrapWithScrapingBee = async (pageUrl: string): Promise<string | null> => {

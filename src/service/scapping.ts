@@ -1,10 +1,11 @@
 import axios from "axios";
 import TruliaListing from "../model/trulia.model";
 import fs from "fs";
+import "dotenv/config";
 import * as cheerio from "cheerio";
 import puppeteer from "puppeteer";
 
-const API_KEY = "SLN1BP9OROCS3JTNEBIEWWBORNQMLM6JB6NX3F0ISK1GDBWJ5IPB8354AACFD2Y69F5B5KBOP3V2PYA9";
+const API_KEY = process.env.API_KEY_SCRAP_BEE;
 const BASE_URL = "https://app.scrapingbee.com/api/v1/";
 
 // Test ScrapingBee connection first
