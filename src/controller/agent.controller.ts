@@ -10,6 +10,7 @@ import moment from 'moment';
 import Listing from '../model/listing.model';
 import twilio from "twilio";
 import "dotenv/config";
+import ContactedAgent from '../model/contactedAgent.model';
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -717,16 +718,50 @@ export const sendSMS = async (req: Request, res: Response) => {
         let message = body;
 
         await client.messages.create({
-            body:message,
+            body: message,
             from: process.env.TWILIO_FROM,
             to: `+1${agent?.phoneNumber.replace(/\D/g, "")}`
         });
+
+        //Add in the contacted model
+        await ContactedAgent.create({ agentId });
 
         res.status(200).json({ success: true, message: "SMS sent successfully" });
     } catch (error) {
         console.log(error);
 
         res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const getAllContactedAgent = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const limit = Number(req.query.limit) || 10;
+        const page = Number(req.query.page) || 1;
+        const skip = (page - 1) * limit;
+
+        const [agents, total] = await Promise.all([
+            ContactedAgent.find()
+                .populate("agentId", "fullName email phoneNumber")
+                .sort({ contactedAt: -1 })
+                .skip(skip)
+                .limit(limit),
+            ContactedAgent.countDocuments(),
+        ]);
+
+        return res.status(200).json({
+            success: true,
+            total,
+            page,
+            limit,
+            pages: Math.ceil(total / limit),
+            data: agents,
+        });
+    } catch (error: any) {
+        return res.status(500).json({
+            success: false,
+            message: error?.message || "Internal server error",
+        });
     }
 };
 

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   getAgentDetails,
+  getAllContactedAgent,
   getAllProperty,
   getPropertyDetail,
   home,
@@ -15,6 +16,7 @@ agentRouter.get("/home",home);
 agentRouter.get("/agent-detail/:id",getAgentDetails);
 agentRouter.get("/property/all",getAllProperty);
 agentRouter.get("/property/:id",getPropertyDetail);
-agentRouter.post("/send-sms",sendSMS)
+agentRouter.post("/send-sms",sendSMS);
+agentRouter.get("/get-contacted-agents",getAllContactedAgent);
 
 export default agentRouter;

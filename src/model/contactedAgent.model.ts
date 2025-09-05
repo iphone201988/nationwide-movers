@@ -1,11 +1,21 @@
 import mongoose, { Schema } from "mongoose";
 
-const contactedAgentSchema = new Schema({
+const contactedAgentSchema = new Schema(
+  {
     agentId: {
-        type: mongoose.Types.ObjectId,
-        ref: "Agent"
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Agent"
     },
-    
-}, {
-    timestamps: true
-})
+    contactedAt: {
+      type: Date,
+      default: Date.now
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+const ContactedAgent = mongoose.model("ContactedAgent", contactedAgentSchema);
+
+export default ContactedAgent;
