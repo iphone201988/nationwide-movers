@@ -4,6 +4,7 @@ import {
   getAllProperty,
   getPropertyDetail,
   home,
+  sendSMS,
   uploadAndAnalyzeExcel,
 } from '../controller/agent.controller';
 
@@ -14,5 +15,6 @@ agentRouter.get("/home",home);
 agentRouter.get("/agent-detail/:id",getAgentDetails);
 agentRouter.get("/property/all",getAllProperty);
 agentRouter.get("/property/:id",getPropertyDetail);
+agentRouter.post("/send-sms",sendSMS)
 
 export default agentRouter;

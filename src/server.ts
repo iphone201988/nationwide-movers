@@ -2,11 +2,11 @@ import express from "express";
 import dotenv from "dotenv";
 import colors from "colors";
 import connectToMongoDB from "./config/Db";
-import agentRoutes from "./route/agent.routes";
 import * as path from "path";
 import { runTruliaScraper } from "./service/scapping";
 import { loadLocalHtmlWithPuppeteer, scrapWithScrapingBee } from "./service/details.scarpping";
 import TruliaListing from "./model/trulia.model";
+import router from "./route";
 
 dotenv.config();
 
@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Routes
-app.use('/api', agentRoutes);
+app.use('/api',router);
 
 app.get("/", (req, res) => {
     res.send("API is running 🚀");
@@ -58,8 +58,6 @@ app.listen(PORT, () => {
     }
 })();
 
-
-
-    //       const pageUrl = "https://www.trulia.com/home/39-coldstone-ct-delaware-oh-43015-456301031"; // 👈 your target URL
-    //       const pageUrl = "https://www.trulia.com/builder-community-plan/stockdale-farms-charles-2059112312"; 
-    //       const pageUrl = "https://www.trulia.com/home/490-penwell-dr-delaware-oh-43015-454942659"; 
+//       const pageUrl = "https://www.trulia.com/home/39-coldstone-ct-delaware-oh-43015-456301031"; // 👈 your target URL
+//       const pageUrl = "https://www.trulia.com/builder-community-plan/stockdale-farms-charles-2059112312"; 
+//       const pageUrl = "https://www.trulia.com/home/490-penwell-dr-delaware-oh-43015-454942659"; 

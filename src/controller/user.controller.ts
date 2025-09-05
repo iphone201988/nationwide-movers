@@ -14,7 +14,7 @@ export const register = async (req: Request, res: Response): Promise<any> => {
             });
         }
 
-        const hashPassword = hashedPassword(password);
+        const hashPassword =await hashedPassword(password);
 
         const newUser = await User.create({
             fullName,

@@ -8,6 +8,13 @@ import transformRowToRealtor from '../utils/transformRealtor';
 import Agent from '../model/agent.model';
 import moment from 'moment';
 import Listing from '../model/listing.model';
+import twilio from "twilio";
+import "dotenv/config";
+
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+const client = twilio(accountSid, authToken);
 
 interface ExcelRow {
     [key: string]: any;
@@ -693,6 +700,36 @@ export const getPropertyDetail = async (req: Request, res: Response): Promise<an
         });
     }
 }
+
+export const sendSMS = async (req: Request, res: Response) => {
+    try {
+        const { agentId, body } = req.body;
+
+        const agent = await Agent.findById(agentId);
+
+        if (!agent) {
+            return res.status(404).json({
+                success: false,
+                message: "Agent not found"
+            })
+        }
+
+        let message = body;
+
+        await client.messages.create({
+            body:message,
+            from: process.env.TWILIO_FROM,
+            to: `+1${agent?.phoneNumber.replace(/\D/g, "")}`
+        });
+
+        res.status(200).json({ success: true, message: "SMS sent successfully" });
+    } catch (error) {
+        console.log(error);
+
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 
 export const agentController = {
     readExcelFile,
