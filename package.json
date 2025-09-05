@@ -6,13 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
-    "start": "tsc && node dist/src/server.js",
-    "test-transform": "ts-node src/scripts/testTransform.ts",
-    "import-realtors": "ts-node src/scripts/importRealtors.ts",
-    "debug-database": "ts-node src/scripts/debugDatabase.ts",
-    "check-mongo": "ts-node src/scripts/checkMongoData.ts",
-    "test-api": "ts-node src/scripts/testAPI.ts",
-    "example-usage": "ts-node src/example-usage.ts"
+    "start": "tsc && node --max-old-space-size=2048 dist/src/server.js"
   },
   "keywords": [],
   "author": "",
