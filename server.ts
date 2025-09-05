@@ -8,6 +8,7 @@ import { runTruliaScraper } from "./src/service/scapping";
 import { loadLocalHtmlWithPuppeteer, scrapWithScrapingBee } from "./src/service/details.scarpping";
 import TruliaListing from "./src/model/trulia.model";
 import router from "./src/route";
+import errorHandler from "./src/utils/error";
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ const app = express();
 
 app.use(express.json());
 app.use(morgan("dev"));
+
 
 
 // Serve static files from public directory
@@ -40,6 +42,9 @@ app.listen(PORT, () => {
     console.log(colors.yellow.bgBlack("Server running on ") +
         colors.cyan.underline.bgBlack(`http://localhost:${PORT}`));
 });
+
+app.use(errorHandler);
+
 
 //Main function to run the scraper
 // runTruliaScraper();

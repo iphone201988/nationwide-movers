@@ -6,9 +6,9 @@ export interface IAgent extends Document {
     phoneNumber?: string;
     profileImage?: string;
     address?: string;
-    
-  brokerage?: string;
-  image?: string;
+
+    brokerage?: string;
+    image?: string;
 
     createdAt: Date;
     updatedAt: Date;
@@ -22,7 +22,7 @@ const agentSchema = new Schema<IAgent>(
         profileImage: { type: String, default: null },
         address: { type: String, default: null },
         brokerage: { type: String, default: null },
-        image:{ type: String, default: null}
+        image: { type: String, default: null }
     },
     {
         timestamps: true
