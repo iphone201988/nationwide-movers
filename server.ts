@@ -1,12 +1,12 @@
 import express from "express";
 import dotenv from "dotenv";
 import colors from "colors";
-import connectToMongoDB from "./config/Db";
+import connectToMongoDB from "./src/config/Db";
 import * as path from "path";
-import { runTruliaScraper } from "./service/scapping";
-import { loadLocalHtmlWithPuppeteer, scrapWithScrapingBee } from "./service/details.scarpping";
-import TruliaListing from "./model/trulia.model";
-import router from "./route";
+import { runTruliaScraper } from "./src/service/scapping";
+import { loadLocalHtmlWithPuppeteer, scrapWithScrapingBee } from "./src/service/details.scarpping";
+import TruliaListing from "./src/model/trulia.model";
+import router from "./src/route";
 
 dotenv.config();
 
