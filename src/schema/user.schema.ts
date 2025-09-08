@@ -83,3 +83,19 @@ export const loginSchema = {
         }),
     }),
 };
+
+export const givefeedbackSchema = {
+    body: Joi.object({
+        feedback: Joi.number()
+            .valid(1, 2, 3)
+            .required()
+            .messages({
+                "any.only": "Feedback must be 1 (Positive), 2 (Neutral), or 3 (Negative)",
+                "any.required": "Feedback is required",
+            }),
+        agentId: Joi.string().required().messages({
+            "string.empty": "Agent ID cannot be empty",
+            "any.required": "Agent ID is required",
+        }),
+    }),
+}

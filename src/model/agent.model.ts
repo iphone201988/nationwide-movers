@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { feedbackEnum } from '../utils/enum';
 
 export interface IAgent extends Document {
     fullName?: string;
@@ -12,6 +13,7 @@ export interface IAgent extends Document {
 
     createdAt: Date;
     updatedAt: Date;
+    feedback?:number;
 }
 
 const agentSchema = new Schema<IAgent>(
@@ -22,7 +24,11 @@ const agentSchema = new Schema<IAgent>(
         profileImage: { type: String, default: null },
         address: { type: String, default: null },
         brokerage: { type: String, default: null },
-        image: { type: String, default: null }
+        image: { type: String, default: null },
+        feedback:{
+            type:Number,
+            enum:[feedbackEnum['Negative Feedback'],feedbackEnum['Neutral Feedback'],feedbackEnum['Positive Feedback']],
+        }
     },
     {
         timestamps: true

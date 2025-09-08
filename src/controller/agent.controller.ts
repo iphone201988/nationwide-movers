@@ -820,6 +820,31 @@ export const getAllContactedAgent = async (req: Request, res: Response): Promise
     }
 };
 
+export const givefeedback = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { agentId, feedback } = req.body; // 1 = Positive Feedback, 2 = Neutral Feedback, 3 = Negative Feedback
+        
+        const agent = await Agent.findById(agentId);
+        if (!agent) {
+            return res.status(404).json({
+                success: false,
+                message: "Agent not found"
+            });
+        }
+        agent.feedback = feedback;
+        await agent.save();
+        return res.status(200).json({
+            success: true,
+            message: "Feedback given successfully",
+            agent
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error instanceof Error ? error.message : "Unknown error",
+        });
+    }
+}
 
 export const agentController = {
     readExcelFile,
