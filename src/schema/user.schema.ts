@@ -40,6 +40,14 @@ export const registerSchema = {
                 "string.empty": "Password cannot be empty",
                 "any.required": "Password is required",
             }),
+        deviceToken: Joi.string().required().messages({
+            "string.empty": "Device token cannot be empty",
+            "any.required": "Device token is required",
+        }),
+        deviceType: Joi.number().valid(1, 2).required().messages({
+            "any.only": "Device type must be either 1 (iOS) or 2 (Android)",
+            "any.required": "Device type is required",
+        }),
     }),
 };
 
@@ -65,5 +73,13 @@ export const loginSchema = {
                 "string.empty": "Password cannot be empty",
                 "any.required": "Password is required",
             }),
+        deviceToken: Joi.string().required().messages({
+            "string.empty": "Device token cannot be empty",
+            "any.required": "Device token is required",
+        }),
+        deviceType: Joi.number().valid(1, 2).required().messages({
+            "any.only": "Device type must be either 1 (iOS) or 2 (Android)",
+            "any.required": "Device type is required",
+        }),
     }),
 };

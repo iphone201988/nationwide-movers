@@ -12,6 +12,8 @@ export interface IUser extends Document {
     role: number;
     createdAt: Date;
     updatedAt: Date;
+    deviceType: number; //'1 => IOS ', '2 => Android'
+    deviceToken?: string;
 }
 
 const userSchema = new Schema<IUser>(
@@ -26,6 +28,13 @@ const userSchema = new Schema<IUser>(
             type: Number,
             enum: [role.USER, role.ADMIN],
             default: role.USER
+        },
+        deviceType:{
+            type: Number,
+            enum: [1,2],//'1 => IOS ', '2 => Android'
+            default: 1
+        },
+        deviceToken: { type: String 
         }
     },
     {

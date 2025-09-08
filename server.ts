@@ -9,6 +9,8 @@ import { loadLocalHtmlWithPuppeteer, scrapWithScrapingBee } from "./src/service/
 import TruliaListing from "./src/model/trulia.model";
 import router from "./src/route";
 import errorHandler from "./src/utils/error";
+import Realtor from "./src/model/realtor.model";
+import Agent from "./src/model/agent.model";
 
 dotenv.config();
 
@@ -30,6 +32,34 @@ app.use('/api', router);
 app.get("/", (req, res) => {
     res.send("API is running 🚀");
 });
+
+app.post("/uplode-data", async (req, res) => {
+    try {
+        const RealtorData = await Realtor.find();
+
+        for (const realtor of RealtorData) {
+            const { fullName, phoneNumber, rawData } = realtor
+            if (!fullName || !phoneNumber) continue;
+
+            const address = rawData?.["**Paste+Address**"] || null;
+
+            await Agent.create({
+                fullName,
+                phoneNumber,
+                address,
+            });
+            realtor.isDataSaved = true;
+            await realtor.save();
+        }
+        res.status(200).json({ success: true, message: "Data uploaded successfully" });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error instanceof Error ? error.message : "Unknown error",
+        });
+    }
+});
+
 
 // Serve the test upload page
 app.get("/test-upload", (req, res) => {

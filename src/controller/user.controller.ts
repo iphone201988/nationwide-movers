@@ -4,7 +4,7 @@ import { comparePassword, generateToken, hashedPassword } from "../utils/helper"
 
 export const register = async (req: Request, res: Response): Promise<any> => {
     try {
-        const { fullName, email, phoneNumber, password } = req.body;
+        const { fullName, email, phoneNumber, password ,deviceType,deviceToken } = req.body;
 
         const existingUser = await User.findOne({ email });
         if (existingUser) {
@@ -21,6 +21,8 @@ export const register = async (req: Request, res: Response): Promise<any> => {
             email,
             phoneNumber,
             password: hashPassword,
+            deviceType,
+            deviceToken
         });
 
         return res.status(201).json({
@@ -44,7 +46,7 @@ export const register = async (req: Request, res: Response): Promise<any> => {
 
 export const login = async (req: Request, res: Response): Promise<any> => {
     try {
-        const { email, password } = req.body;
+        const { email, password ,  deviceType, deviceToken} = req.body;
 
         const user = await User.findOne({ email });
         if (!user) {
@@ -61,6 +63,10 @@ export const login = async (req: Request, res: Response): Promise<any> => {
                 message: "Invalid credentials",
             });
         }
+        
+        user.deviceType = deviceType;
+        user.deviceToken = deviceToken;
+        await user.save();
 
         const token = generateToken({ _id: user._id, email: user.email, role: user.role });
 

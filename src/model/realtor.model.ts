@@ -63,6 +63,7 @@ export interface IRealtor extends Document {
   rawData?: any;
   createdAt: Date;
   updatedAt: Date;
+  isDataSaved?: boolean;
 }
 
 const realtorSchema = new Schema<IRealtor>({
@@ -123,7 +124,8 @@ const realtorSchema = new Schema<IRealtor>({
   
   // Additional fields
   category: { type: String, trim: true },
-  rawData: { type: Schema.Types.Mixed }
+  rawData: { type: Schema.Types.Mixed },
+  isDataSaved: { type: Boolean, default: false }
 }, {
   timestamps: true
 });
