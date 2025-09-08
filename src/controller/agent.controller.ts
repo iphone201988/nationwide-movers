@@ -548,8 +548,6 @@ export const home = async (req: Request, res: Response): Promise<any> => {
         const limit = req.query.limit ? parseInt(req.query.limit.toString(), 10) : 10;
         const page = req.query.page ? parseInt(req.query.page.toString(), 10) : 1;
 
-        const today = moment().startOf('day');
-
         let qry = {};
         if (req.query.search) {
             const search = req.query.search.toString();
@@ -566,24 +564,53 @@ export const home = async (req: Request, res: Response): Promise<any> => {
             .limit(limit);
         const totalAgent = await Agent.countDocuments(qry);
 
-        const newAgent = await Agent.find({
-            ...qry,
-            createdAt: {
-                $gte: today.toDate(),
-                $lt: moment(today).endOf('day').toDate()
-            }
-        }).sort({ createdAt: -1 }).limit(10);
-
         res.status(200).json({
             success: true,
             message: 'Agent fetched successfully',
             data: agent,
             total: totalAgent,
             page: page,
-            pages: Math.ceil(totalAgent / limit),
-            newAgent
+            pages: Math.ceil(totalAgent / limit)
         });
 
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+}
+
+export const newAgents = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const today = moment().startOf('day');
+
+        let qry = {};
+
+        if (req.query.search) {
+            const search = req.query.search.toString();
+            qry = {
+                $or: [
+                    { fullName: { $regex: search, $options: 'i' } },
+                    { phoneNumber: { $regex: search, $options: 'i' } },
+                    { brokerage: { $regex: search, $options: 'i' } },
+                ]
+            };
+        }
+
+        const newAgent = await Agent.find({
+            ...qry,
+            createdAt: {
+                $gte: today.toDate(),
+                $lt: moment(today).endOf('day').toDate()
+            }
+        }).sort({ createdAt: -1 }).limit(15);
+
+        res.status(200).json({
+            success: true,
+            message: 'New Agent fetched successfully',
+            data: newAgent
+        });
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -630,6 +657,44 @@ export const getAllProperty = async (req: Request, res: Response): Promise<any> 
         const limit = req.query.limit ? parseInt(req.query.limit.toString(), 10) : 10;
         const page = req.query.page ? parseInt(req.query.page.toString(), 10) : 1;
 
+        let qry: any = {};
+
+        if (req.query.search) {
+            const search = req.query.search.toString();
+            qry.$or = [
+                { title: { $regex: search, $options: "i" } },
+                { price: { $regex: search, $options: "i" } },
+                { address: { $regex: search, $options: "i" } },
+                { description: { $regex: search, $options: "i" } },
+                { communityDescription: { $regex: search, $options: "i" } },
+            ];
+        }
+
+        const listing = await Listing.find(qry)
+            .populate("agentId", "_id fullName phoneNumber address brokerage image")
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit);
+
+        const totalListing = await Listing.countDocuments(qry);
+
+        res.status(200).json({
+            success: true,
+            message: "Properties fetched successfully",
+            listing,
+            page,
+            totalPage: Math.ceil(totalListing / limit),
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error instanceof Error ? error.message : "Unknown error",
+        });
+    }
+};
+
+export const newProperty = async (req: Request, res: Response): Promise<any> => {
+    try {
         const today = moment().startOf("day");
 
         let qry: any = {};
@@ -653,31 +718,21 @@ export const getAllProperty = async (req: Request, res: Response): Promise<any> 
             },
         }).populate("agentId", "_id fullName phoneNumber address brokerage image")
             .sort({ createdAt: -1 })
-            .limit(10);
-
-        const listing = await Listing.find(qry)
-            .populate("agentId", "_id fullName phoneNumber address brokerage image")
-            .sort({ createdAt: -1 })
-            .skip((page - 1) * limit)
-            .limit(limit);
-
-        const totalListing = await Listing.countDocuments(qry);
+            .limit(15);
 
         res.status(200).json({
             success: true,
-            message: "Properties fetched successfully",
+            message: "New Properties fetched successfully",
             newListing,
-            listing,
-            page,
-            totalPage: Math.ceil(totalListing / limit),
         });
     } catch (error) {
+        console.log(error);
         return res.status(500).json({
             success: false,
             message: error instanceof Error ? error.message : "Unknown error",
         });
     }
-};
+}
 
 export const getPropertyDetail = async (req: Request, res: Response): Promise<any> => {
     try {
