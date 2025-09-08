@@ -11,6 +11,7 @@ import Listing from '../model/listing.model';
 import twilio from "twilio";
 import "dotenv/config";
 import ContactedAgent from '../model/contactedAgent.model';
+import Meeting from '../model/meeting.model';
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -823,7 +824,7 @@ export const getAllContactedAgent = async (req: Request, res: Response): Promise
 export const givefeedback = async (req: Request, res: Response): Promise<any> => {
     try {
         const { agentId, feedback } = req.body; // 1 = Positive Feedback, 2 = Neutral Feedback, 3 = Negative Feedback
-        
+
         const agent = await Agent.findById(agentId);
         if (!agent) {
             return res.status(404).json({
@@ -845,6 +846,87 @@ export const givefeedback = async (req: Request, res: Response): Promise<any> =>
         });
     }
 }
+
+export const addMeeting = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { agentId, meetingDate, meetingTime } = req.body;
+
+        const agent = await Agent.findById(agentId);
+        if (!agent) {
+            return res.status(404).json({
+                success: false,
+                message: "Agent not found"
+            });
+        }
+        await Meeting.create({ agentId, meetingDate, meetingTime });
+        return res.status(200).json({
+            success: true,
+            message: "Meeting added successfully",
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error instanceof Error ? error.message : "Unknown error",
+        });
+    }
+}
+
+export const markMeetingCompleted = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { meetingId } = req.body;
+        const meeting = await Meeting.findById(meetingId);
+        if (!meeting) {
+            return res.status(404).json({
+                success: false,
+                message: "Meeting not found"
+            });
+        }
+        meeting.isCompleted = true;
+        await meeting.save();
+        return res.status(200).json({
+            success: true,
+            message: "Meeting marked as completed successfully",
+            meeting
+        }); 
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error instanceof Error ? error.message : "Unknown error",
+        });  
+    }
+}
+
+export const getAllMeetings = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const limit = Number(req.query.limit) || 10;
+        const page = Number(req.query.page) || 1;
+        const skip = (page - 1) * limit;    
+        const [meetings, total] = await Promise.all([
+            Meeting.find()
+                .populate("agentId", "fullName email phoneNumber")
+                .sort({ meetingDate: -1, meetingTime: -1 })
+                .skip(skip)
+                .limit(limit)
+                .sort({ meetingDate: -1, meetingTime: -1 }),
+            Meeting.countDocuments(),
+        ]);
+        return res.status(200).json({
+            success: true,
+            total,
+            page,
+            limit,
+            pages: Math.ceil(total / limit),
+            data: meetings,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error instanceof Error ? error.message : "Unknown error",
+        }); 
+        
+    }
+}
+    
 
 export const agentController = {
     readExcelFile,

@@ -99,3 +99,42 @@ export const givefeedbackSchema = {
         }),
     }),
 }
+
+export const addMeetingSchema = {
+    body: Joi.object({
+        agentId: Joi.string().required().messages({
+            "string.empty": "Agent ID cannot be empty",
+            "any.required": "Agent ID is required",
+        }),
+        meetingDate: Joi.date().required().messages({
+            "date.base": "Meeting date must be a valid date",
+            "any.required": "Meeting date is required",
+        }),
+        meetingTime: Joi.string().required().messages({
+            "string.empty": "Meeting time cannot be empty",
+            "any.required": "Meeting time is required",
+        }),
+    }),
+}
+
+export const updateMeetingSchema = {
+    body: Joi.object({
+        meetingId: Joi.string().required().messages({
+            "string.empty": "Meeting ID cannot be empty",
+            "any.required": "Meeting ID is required",
+        }),
+    }),
+}
+
+export const getMeetingSchema = {
+    query: Joi.object({
+        limit: Joi.number().optional().messages({
+            "number.base": "Limit must be a number",
+            "any.required": "Limit is required",
+        }),
+        page: Joi.number().optional().messages({
+            "number.base": "Page must be a number",
+            "any.required": "Page is required",
+        }),
+    }),
+}
