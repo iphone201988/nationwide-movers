@@ -79,22 +79,22 @@ app.use(errorHandler);
 //Main function to run the scraper
 // runTruliaScraper();
 
-(async () => {
-    const alltruliaLisitng = await TruliaListing.find({ isScraped: false });
-    for (const listing of alltruliaLisitng) {
-        const pageUrl = listing.listingUrl;
+// (async () => {
+//     const alltruliaLisitng = await TruliaListing.find({ isScraped: false });
+//     for (const listing of alltruliaLisitng) {
+//         const pageUrl = listing.listingUrl;
 
-        const localFile = await scrapWithScrapingBee(pageUrl);
-        if (localFile !== null) {
-            await loadLocalHtmlWithPuppeteer(localFile);
-            listing.isScraped = true;
-            await listing.save();
-            console.log("✅ Scraped and updated:", listing.listingUrl);
-        } else {
-            console.log("❌ Failed to scrape:", listing.listingUrl);
-        }
-    }
-})();
+//         const localFile = await scrapWithScrapingBee(pageUrl);
+//         if (localFile !== null) {
+//             await loadLocalHtmlWithPuppeteer(localFile);
+//             listing.isScraped = true;
+//             await listing.save();
+//             console.log("✅ Scraped and updated:", listing.listingUrl);
+//         } else {
+//             console.log("❌ Failed to scrape:", listing.listingUrl);
+//         }
+//     }
+// })();
 
 //       const pageUrl = "https://www.trulia.com/home/39-coldstone-ct-delaware-oh-43015-456301031"; // 👈 your target URL
 //       const pageUrl = "https://www.trulia.com/builder-community-plan/stockdale-farms-charles-2059112312";
