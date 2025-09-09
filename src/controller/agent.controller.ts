@@ -694,7 +694,6 @@ export const getAllProperty = async (req: Request, res: Response): Promise<any> 
                     agentId: agent?._id || null,
                     fullName: agent?.fullName || null,
                     phoneNumber: agent?.phoneNumber || null,
-                    address: agent?.address || null,
                     brokerage: agent?.brokerage || null,
                     image: agent?.image || null,
                 };
