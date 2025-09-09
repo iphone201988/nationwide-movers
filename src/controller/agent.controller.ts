@@ -679,17 +679,35 @@ export const getAllProperty = async (req: Request, res: Response): Promise<any> 
         }
 
         const listing = await Listing.find(qry)
-            .populate("agentId", "_id fullName phoneNumber address brokerage image")
             .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
             .limit(limit);
+
+        const filteredListing = await Promise.all(
+            listing.map(async (item) => {
+                const agent = await Agent.findById(item.agentId).select(
+                    "_id fullName phoneNumber address brokerage image"
+                );
+
+                return {
+                    ...item.toObject(),
+                    agentId: agent?._id || null,
+                    fullName: agent?.fullName || null,
+                    phoneNumber: agent?.phoneNumber || null,
+                    address: agent?.address || null,
+                    brokerage: agent?.brokerage || null,
+                    image: agent?.image || null,
+                };
+            })
+        );
+
 
         const totalListing = await Listing.countDocuments(qry);
 
         res.status(200).json({
             success: true,
             message: "Properties fetched successfully",
-            listing,
+            listing: filteredListing,
             page,
             totalPage: Math.ceil(totalListing / limit),
         });
@@ -894,12 +912,12 @@ export const markMeetingCompleted = async (req: Request, res: Response): Promise
             success: true,
             message: "Meeting marked as completed successfully",
             meeting
-        }); 
+        });
     } catch (error) {
         return res.status(500).json({
             success: false,
             message: error instanceof Error ? error.message : "Unknown error",
-        });  
+        });
     }
 }
 
@@ -907,7 +925,7 @@ export const getAllMeetings = async (req: Request, res: Response): Promise<any> 
     try {
         const limit = Number(req.query.limit) || 10;
         const page = Number(req.query.page) || 1;
-        const skip = (page - 1) * limit;    
+        const skip = (page - 1) * limit;
         const [meetings, total] = await Promise.all([
             Meeting.find()
                 .populate("agentId", "fullName email phoneNumber")
@@ -929,11 +947,11 @@ export const getAllMeetings = async (req: Request, res: Response): Promise<any> 
         return res.status(500).json({
             success: false,
             message: error instanceof Error ? error.message : "Unknown error",
-        }); 
-        
+        });
+
     }
 }
-    
+
 
 export const agentController = {
     readExcelFile,
