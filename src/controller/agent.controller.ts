@@ -637,10 +637,17 @@ export const getAgentDetails = async (req: Request, res: Response): Promise<any>
             { $sample: { size: 10 } }
         ]);
 
+        const contactedAgent = await ContactedAgent.findOne({ agentId: agent._id });
+        let contactedAt = null;
+        if (contactedAgent) {
+            contactedAt = contactedAgent.contactedAt;
+        }
+
         return res.status(200).json({
             success: true,
             agent: {
                 ...agent.toObject(),
+                contactedAt,
                 listings
             }
         });
