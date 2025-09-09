@@ -764,7 +764,7 @@ export const newProperty = async (req: Request, res: Response): Promise<any> => 
         res.status(200).json({
             success: true,
             message: "New Properties fetched successfully",
-            newListing:filteredNewProperty,
+            newListing: filteredNewProperty,
         });
     } catch (error) {
         console.log(error);
@@ -777,18 +777,33 @@ export const newProperty = async (req: Request, res: Response): Promise<any> => 
 
 export const getPropertyDetail = async (req: Request, res: Response): Promise<any> => {
     try {
-        const id = req.params.id;
-        const listing = await Listing.findById(id).populate("agentId", "_id fullName phoneNumber address brokerage image");
+        const { id } = req.params;
+
+        const listing = await Listing.findById(id).lean(); // lean for performance
         if (!listing) {
-            return res.status(404).json({
+            res.status(404).json({
                 success: false,
-                message: "Lisitng not found"
+                message: "Listing not found",
             });
+            return;
         }
+
+        const agent = await Agent.findById(listing.agentId)
+            .select("_id fullName phoneNumber address brokerage image")
+            .lean();
+
+        const responseData = {
+            ...listing,
+            fullName: agent.fullName,
+            phoneNumber: agent.phoneNumber,
+            brokerage: agent.brokerage,
+            image: agent.image,
+        }
+
         res.status(200).json({
             success: true,
             message: "Lisitng detail fetched successfully",
-            listing
+            listing: responseData
         });
     } catch (error) {
         return res.status(500).json({
