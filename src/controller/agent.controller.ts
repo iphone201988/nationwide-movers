@@ -794,10 +794,10 @@ export const getPropertyDetail = async (req: Request, res: Response): Promise<an
 
         const responseData = {
             ...listing,
-            fullName: agent.fullName,
-            phoneNumber: agent.phoneNumber,
-            brokerage: agent.brokerage,
-            image: agent.image,
+            fullName: agent?.fullName || null,
+            phoneNumber: agent?.phoneNumber || null,
+            brokerage: agent?.brokerage || null,
+            image: agent?.image || null,
         }
 
         res.status(200).json({
