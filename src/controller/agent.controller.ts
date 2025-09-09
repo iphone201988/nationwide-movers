@@ -741,14 +741,30 @@ export const newProperty = async (req: Request, res: Response): Promise<any> => 
                 $gte: today.toDate(),
                 $lt: moment(today).endOf("day").toDate(),
             },
-        }).populate("agentId", "_id fullName phoneNumber address brokerage image")
+        })
             .sort({ createdAt: -1 })
             .limit(15);
+
+        const filteredNewProperty = await Promise.all(
+            newListing.map(async (item) => {
+                const agent = await Agent.findById(item.agentId).select(
+                    "_id fullName phoneNumber address brokerage image"
+                );
+                return {
+                    ...item.toObject(),
+                    agentId: agent?._id || null,
+                    fullName: agent?.fullName || null,
+                    phoneNumber: agent?.phoneNumber || null,
+                    brokerage: agent?.brokerage || null,
+                    image: agent?.image || null,
+                };
+            })
+        );
 
         res.status(200).json({
             success: true,
             message: "New Properties fetched successfully",
-            newListing,
+            newListing:filteredNewProperty,
         });
     } catch (error) {
         console.log(error);
