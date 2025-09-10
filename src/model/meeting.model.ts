@@ -7,7 +7,7 @@ const meetingSchema = new Schema(
             ref: "Agent"
         },
         meetingDate: {
-            type: Date
+            type: String
         },
         meetingTime: {
             type: String
