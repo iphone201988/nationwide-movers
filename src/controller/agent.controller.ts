@@ -853,7 +853,7 @@ export const getAllContactedAgent = async (req: Request, res: Response): Promise
 
         const [agents, total] = await Promise.all([
             ContactedAgent.find()
-                .populate("agentId", "fullName email phoneNumber")
+                .populate("agentId", "fullName email phoneNumber image")
                 .sort({ contactedAt: -1 })
                 .skip(skip)
                 .limit(limit),
