@@ -89,7 +89,9 @@ export const getAllTemplate = async (req: Request, res: Response): Promise<any> 
 
         const templates = await Template.find(filter)
             .skip((page - 1) * limit)
+            .sort({ createdAt: -1 })
             .limit(Number(limit));
+            
         const total = await Template.countDocuments(filter);
 
         return res.status(200).json({
