@@ -110,10 +110,11 @@ export async function scrapeRealtors() {
 
 // Enhanced Trulia scraper
 const websites = [
-    "https://www.trulia.com/OH/Delaware/",
-    "https://www.trulia.com/DE/Delaware_City/",
-    "https://www.trulia.com/AR/Delaware/",
-    "https://www.trulia.com/PA/Delaware_Water_Gap/"
+    // "https://www.trulia.com/OH/Delaware/",
+    // "https://www.trulia.com/DE/Delaware_City/",
+    // "https://www.trulia.com/AR/Delaware/",
+    // "https://www.trulia.com/PA/Delaware_Water_Gap/",
+    "https://www.trulia.com/MD/"
 ];
 
 export const runTruliaScraper = async () => {
@@ -295,15 +296,17 @@ const scrapeTruliaWithPuppeteer = async (pageUrl: string): Promise<{ totalResult
         console.log("🎭 Using Puppeteer to scrape:", pageUrl);
 
         browser = await puppeteer.launch({ 
-            headless: false,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-blink-features=AutomationControlled',
-                '--disable-features=VizDisplayCompositor',
-                '--disable-web-security',
-                '--disable-features=site-per-process'
-            ]
+            // headless: false,
+            // args: [
+            //     '--no-sandbox',
+            //     '--disable-setuid-sandbox',
+            //     '--disable-blink-features=AutomationControlled',
+            //     '--disable-features=VizDisplayCompositor',
+            //     '--disable-web-security',
+            //     '--disable-features=site-per-process'
+            // ]
+            executablePath: '/usr/bin/chromium-browser',
+            headless: true
         });
         
         const page = await browser.newPage();
