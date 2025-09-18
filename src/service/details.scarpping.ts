@@ -153,11 +153,8 @@ const saveScrapedData = async (scrapedData: any) => {
 export const loadLocalHtmlWithPuppeteer = async (localFilePath: string) => {
     let browser: any;
     try {
-        browser = await puppeteer.launch({
-            executablePath: '/usr/bin/chromium-browser',
+        browser = await puppeteer.launch({ headless: false });
 
-            headless: true
-        });
         const page = await browser.newPage();
 
         console.log("🌐 Injecting local HTML content...");

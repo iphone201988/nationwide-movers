@@ -16,7 +16,7 @@ const testScrapingBeeConnection = async (): Promise<boolean> => {
         const response = await axios.get(`${BASE_URL}?url=${testUrl}&api_key=${API_KEY}`, {
             timeout: 30000
         });
-        
+
         if (response.status === 200) {
             console.log("✅ ScrapingBee connection test successful");
             return true;
@@ -83,7 +83,7 @@ export async function scrapeRealtors() {
                 allAgents.push(...parsed.agents);
                 console.log(`✅ Page ${page}: Found ${parsed.agents.length} agents`);
                 page++;
-                
+
                 // Add delay to avoid rate limiting
                 await new Promise(resolve => setTimeout(resolve, 2000));
             } else {
@@ -145,7 +145,7 @@ export const runTruliaScraper = async () => {
                         console.log(`🔄 Attempt ${retryCount + 1}: Using ScrapingBee API`);
                         firstPageData = await scrapeTruliaWithScrapingBee(baseUrl);
                     }
-                    
+
                     // Strategy 2: Fallback to Puppeteer
                     if (!firstPageData) {
                         console.log(`🔄 Attempt ${retryCount + 1}: Using Puppeteer fallback`);
@@ -181,12 +181,12 @@ export const runTruliaScraper = async () => {
             // Scrape remaining pages (limit to reasonable number for testing)
             // const maxPagesToScrape = totalPages;
             const maxPagesToScrape = totalPages;
-            
+
             for (let page = 2; page <= maxPagesToScrape; page++) {
                 try {
                     const pageUrl = `${baseUrl}${page}_p/`;
                     console.log(`📄 Scraping page ${page}/${totalPages}: ${pageUrl}`);
-                    
+
                     // Use the same strategy that worked for page 1
                     let pageData = null;
                     if (scrapingBeeWorking) {
@@ -194,7 +194,7 @@ export const runTruliaScraper = async () => {
                     } else {
                         pageData = await scrapeTruliaWithPuppeteer(pageUrl);
                     }
-                    
+
                     if (pageData && pageData.homeLinks.length > 0) {
                         console.log(`🏠 Page ${page}: Found ${pageData.homeLinks.length} links, ${pageData.actualListings} unique listings`);
                         await saveTruliaListings(baseUrl, pageData.homeLinks, pageUrl);
@@ -202,10 +202,10 @@ export const runTruliaScraper = async () => {
                         console.log(`⚠️ Page ${page}: No data found, might have reached the end`);
                         break; // Stop if no more data
                     }
-                    
+
                     // Add delay between pages to be respectful
                     await new Promise(resolve => setTimeout(resolve, 3000));
-                    
+
                 } catch (error: any) {
                     console.error(`❌ Error scraping page ${page}:`, error.message);
                     // Continue to next page instead of stopping completely
@@ -262,7 +262,7 @@ const scrapeTruliaWithScrapingBee = async (pageUrl: string): Promise<{ totalResu
 
         const html = response.data;
 
-        console.log("📄 Received HTML from ScrapingBee",html);
+        console.log("📄 Received HTML from ScrapingBee", html);
 
         if (!html || typeof html !== "string" || html.trim() === "") {
             console.log(`⚠️ Invalid HTML content from ScrapingBee`);
@@ -295,26 +295,26 @@ const scrapeTruliaWithPuppeteer = async (pageUrl: string): Promise<{ totalResult
     try {
         console.log("🎭 Using Puppeteer to scrape:", pageUrl);
 
-        browser = await puppeteer.launch({ 
-            // headless: false,
-            // args: [
-            //     '--no-sandbox',
-            //     '--disable-setuid-sandbox',
-            //     '--disable-blink-features=AutomationControlled',
-            //     '--disable-features=VizDisplayCompositor',
-            //     '--disable-web-security',
-            //     '--disable-features=site-per-process'
-            // ]
-            executablePath: '/usr/bin/chromium-browser',
-            headless: true
+        browser = await puppeteer.launch({
+            headless: false,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-blink-features=AutomationControlled',
+                '--disable-features=VizDisplayCompositor',
+                '--disable-web-security',
+                '--disable-features=site-per-process'
+            ]
         });
-        
+
+
+
         const page = await browser.newPage();
-        
+
         // Set realistic headers and viewport
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
         await page.setViewport({ width: 1920, height: 1080 });
-        
+
         // Additional stealth measures
         await page.evaluateOnNewDocument(() => {
             Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
@@ -323,9 +323,9 @@ const scrapeTruliaWithPuppeteer = async (pageUrl: string): Promise<{ totalResult
         });
 
         console.log("🌐 Navigating to page...");
-        await page.goto(pageUrl, { 
+        await page.goto(pageUrl, {
             waitUntil: 'networkidle2',
-            timeout: 60000 
+            timeout: 60000
         });
 
         console.log("⏳ Waiting for page to settle...");
@@ -336,7 +336,7 @@ const scrapeTruliaWithPuppeteer = async (pageUrl: string): Promise<{ totalResult
 
         console.log("📄 Extracting HTML content...");
         const html = await page.content();
-        
+
         // Save for debugging
         fs.writeFileSync("puppeteer_result.html", html, "utf-8");
         console.log("💾 Saved Puppeteer HTML result");
@@ -366,7 +366,7 @@ async function autoScroll(page: any) {
             const distance = 200;
             const maxScrolls = 50;
             let scrollCount = 0;
-            
+
             const timer = setInterval(() => {
                 const scrollHeight = document.body.scrollHeight;
                 window.scrollBy(0, distance);
@@ -387,13 +387,13 @@ const extractTotalResults = (html: string): number => {
     try {
         console.log("🔍 Extracting total results...");
         const $ = cheerio.load(html);
-        
+
         // Strategy 1: Look for pagination caption
         const paginationCaption = $('[data-testid="pagination-caption"]');
         if (paginationCaption.length > 0) {
             const captionText = paginationCaption.text().trim();
             console.log(`📊 Pagination caption: "${captionText}"`);
-            
+
             const resultsMatch = captionText.match(/of\s+(\d+)\s+Results/i);
             if (resultsMatch && resultsMatch[1]) {
                 const totalResults = parseInt(resultsMatch[1], 10);
@@ -425,7 +425,7 @@ const extractTotalResults = (html: string): number => {
         const listings = $('a[href*="/home/"], a[href*="/builder-community-plan/"]');
         const listingCount = listings.length;
         console.log(`📊 Fallback: Found ${listingCount} visible listings`);
-        
+
         return listingCount > 0 ? Math.max(listingCount, 40) : 0;
 
     } catch (error: any) {
@@ -442,31 +442,31 @@ const extractUniqueHomeLinks = (html: string): { homeLinks: string[]; actualList
     try {
         console.log("🔗 Extracting unique home links...");
         const $ = cheerio.load(html);
-        
+
         // Find all property links
         const selectors = [
             'a[href*="/home/"]',
             'a[href*="/builder-community-plan/"]'
         ];
-        
+
         selectors.forEach(selector => {
             const elements = $(selector);
             console.log(`🔍 Selector "${selector}" found ${elements.length} elements`);
-            
+
             elements.each((index, element) => {
                 const href = $(element).attr('href');
                 if (href && !href.includes("#") && !href.includes("javascript:")) {
                     // Convert relative URLs to absolute
-                    const fullUrl = href.startsWith('http') ? href : 
-                                  href.startsWith('/') ? `https://www.trulia.com${href}` : 
-                                  `https://www.trulia.com/${href}`;
-                    
+                    const fullUrl = href.startsWith('http') ? href :
+                        href.startsWith('/') ? `https://www.trulia.com${href}` :
+                            `https://www.trulia.com/${href}`;
+
                     if (fullUrl.includes("/home/") || fullUrl.includes("/builder-community-plan/")) {
                         // Extract property ID from URL to deduplicate
                         const propertyIdMatch = fullUrl.match(/\/(\d+)$/);
                         if (propertyIdMatch) {
                             const propertyId = propertyIdMatch[1];
-                            
+
                             if (!uniquePropertyIds.has(propertyId)) {
                                 uniquePropertyIds.add(propertyId);
                                 links.push(fullUrl);
@@ -481,14 +481,14 @@ const extractUniqueHomeLinks = (html: string): { homeLinks: string[]; actualList
         });
 
         const actualListings = uniquePropertyIds.size || links.length;
-        
+
         console.log(`✅ Found ${links.length} total links, ${actualListings} unique properties`);
-        
+
         // Validate expected count (should be ~40 per page)
         if (actualListings > 50) {
             console.log(`⚠️ Warning: Found ${actualListings} listings, expected ~40. May include duplicates.`);
         }
-        
+
         // Log first few links for verification
         if (links.length > 0) {
             console.log("📋 Sample unique links:");
