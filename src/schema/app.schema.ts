@@ -84,21 +84,37 @@ export const loginSchema = {
     }),
 };
 
+export const feedbackEnum = {
+    "RA Joined": 1,
+    "No Response": 2,
+    "Text Failed": 3,
+    "Do Not Text": 4,
+    "Other Response": 5,
+    "Wrong/No Phone #": 6,
+    "Positive Response": 7,
+    "CSV File": 8,
+} as const;
+
 export const givefeedbackSchema = {
     body: Joi.object({
         feedback: Joi.number()
-            .valid(1, 2, 3)
+            .valid(...Object.values(feedbackEnum))
             .required()
             .messages({
-                "any.only": "Feedback must be 1 (Positive), 2 (Neutral), or 3 (Negative)",
+                "any.only": `Feedback must be one of: ${Object.values(feedbackEnum).join(", ")}`,
                 "any.required": "Feedback is required",
+                "number.base": "Feedback must be a number",
             }),
-        agentId: Joi.string().required().messages({
-            "string.empty": "Agent ID cannot be empty",
-            "any.required": "Agent ID is required",
-        }),
+        agentId: Joi.string()
+            .trim()
+            .required()
+            .messages({
+                "string.empty": "Agent ID cannot be empty",
+                "any.required": "Agent ID is required",
+            }),
     }),
-}
+};
+
 
 export const addMeetingSchema = {
     body: Joi.object({

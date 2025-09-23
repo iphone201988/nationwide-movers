@@ -546,41 +546,66 @@ function getCategoryFromRow(row: ExcelRow): string | null {
 
 export const home = async (req: Request, res: Response): Promise<any> => {
     try {
+        // --- Pagination ---
         const limit = req.query.limit ? parseInt(req.query.limit.toString(), 10) : 10;
         const page = req.query.page ? parseInt(req.query.page.toString(), 10) : 1;
 
-        let qry = {};
-        if (req.query.search) {
-            const search = req.query.search.toString();
-            qry = {
-                $or: [
-                    { fullName: { $regex: search, $options: 'i' } },
-                    { phoneNumber: { $regex: search, $options: 'i' } },
-                    { brokerage: { $regex: search, $options: 'i' } },
-                ]
+        // --- Query flags ---
+        const all = req.query.all === 'true';
+        const search = req.query.search?.toString() || '';
+        const feedback = req.query.feedback ? Number(req.query.feedback) : undefined;
+
+        // --- Build MongoDB query ---
+        const qry: any = {};
+
+        // Feedback filter
+        if (!isNaN(feedback!)) {
+            qry.feedback = feedback;
+        }
+
+        // Search filter
+        if (search) {
+            qry.$or = [
+                { fullName: { $regex: search, $options: 'i' } },
+                { phoneNumber: { $regex: search, $options: 'i' } },
+                { brokerage: { $regex: search, $options: 'i' } },
+            ];
+        }
+
+        // Only apply today's date filter if `all` is NOT true
+        if (!all && feedback === undefined) {
+            const today = moment().startOf('day');
+            qry.createdAt = {
+                $gte: today.toDate(),
+                $lt: moment(today).endOf('day').toDate(),
             };
         }
-        const agent = await Agent.find(qry).sort({ createdAt: -1 })
+
+        console.log('Query being executed:', qry);
+
+        // --- Fetch from DB ---
+        const agents = await Agent.find(qry)
+            .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
             .limit(limit);
-        const totalAgent = await Agent.countDocuments(qry);
+
+        const totalAgents = await Agent.countDocuments(qry);
 
         res.status(200).json({
             success: true,
-            message: 'Agent fetched successfully',
-            data: agent,
-            total: totalAgent,
-            page: page,
-            pages: Math.ceil(totalAgent / limit)
+            message: 'All agents fetched successfully',
+            data: agents,
+            total: totalAgents,
+            page,
+            pages: Math.ceil(totalAgents / limit),
         });
-
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: error instanceof Error ? error.message : 'Unknown error'
+            message: error instanceof Error ? error.message : 'Unknown error',
         });
     }
-}
+};
 
 export const newAgents = async (req: Request, res: Response): Promise<any> => {
     try {
@@ -987,8 +1012,8 @@ export const agentUpdate = async (req: Request, res: Response): Promise<any> => 
         const agentId = req.params.id;
 
         console.log(agentId);
-        
-        const { phoneNumber, email, link, comment,address } = req.body;
+
+        const { phoneNumber, email, link, comment, address } = req.body;
 
         const agent = await Agent.findById(agentId);
 
@@ -1010,8 +1035,8 @@ export const agentUpdate = async (req: Request, res: Response): Promise<any> => 
         if (comment) {
             agent.comment = comment
         }
-        if(address){
-            agent.address=address;
+        if (address) {
+            agent.address = address;
         }
         await agent.save();
 
