@@ -7,13 +7,15 @@ export interface IAgent extends Document {
     phoneNumber?: string;
     profileImage?: string;
     address?: string;
+    link?: string;
+    comment?: string;
 
     brokerage?: string;
     image?: string;
 
     createdAt: Date;
     updatedAt: Date;
-    feedback?:number;
+    feedback?: number;
 }
 
 const agentSchema = new Schema<IAgent>(
@@ -25,9 +27,16 @@ const agentSchema = new Schema<IAgent>(
         address: { type: String, default: null },
         brokerage: { type: String, default: null },
         image: { type: String, default: null },
-        feedback:{
-            type:Number,
-            enum:[feedbackEnum['Negative Feedback'],feedbackEnum['Neutral Feedback'],feedbackEnum['Positive Feedback']],
+        feedback: {
+            type: Number,
+            enum: [feedbackEnum['CSV file'], feedbackEnum['Do Not Text'], feedbackEnum['No Response'], feedbackEnum['Other Response'], feedbackEnum['Positive Response'], feedbackEnum['RA Joined'], feedbackEnum['Text failed'], feedbackEnum['Wrong/no phone #']],
+        },
+        link: {
+            type: String,
+        },
+        comment: {
+            type: String,
+            default: null
         }
     },
     {

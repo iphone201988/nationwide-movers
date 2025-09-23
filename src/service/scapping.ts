@@ -111,10 +111,84 @@ export async function scrapeRealtors() {
 // Enhanced Trulia scraper
 const websites = [
     // "https://www.trulia.com/OH/Delaware/",
-    // "https://www.trulia.com/DE/Delaware_City/",
-    // "https://www.trulia.com/AR/Delaware/",
-    // "https://www.trulia.com/PA/Delaware_Water_Gap/",
-    "https://www.trulia.com/MD/"
+    "https://www.trulia.com/DE/Delaware_City/",
+    "https://www.trulia.com/AR/Delaware/",
+    "https://www.trulia.com/PA/Delaware_Water_Gap/",
+    "https://www.trulia.com/MD/",
+    "https://www.trulia.com/MD/2_p/",
+    "https://www.trulia.com/MD/3_p/",
+    "https://www.trulia.com/MD/4_p/",
+    "https://www.trulia.com/MD/5_p/",
+    "https://www.trulia.com/MD/6_p/",
+    "https://www.trulia.com/MD/7_p/",
+    "https://www.trulia.com/MD/8_p/",
+    "https://www.trulia.com/MD/9_p/",
+    "https://www.trulia.com/MD/10_p/",
+    "https://www.trulia.com/MD/11_p/",
+    "https://www.trulia.com/MD/12_p/",
+    "https://www.trulia.com/MD/13_p/",
+    "https://www.trulia.com/MD/14_p/",
+    "https://www.trulia.com/MD/15_p/",
+    "https://www.trulia.com/MD/16_p/",
+    "https://www.trulia.com/MD/17_p/",
+    "https://www.trulia.com/MD/18_p/",
+    "https://www.trulia.com/MD/19_p/",
+    "https://www.trulia.com/MD/20_p/",
+    "https://www.trulia.com/MD/21_p/",
+    "https://www.trulia.com/MD/22_p/",
+    "https://www.trulia.com/MD/23_p/",
+    "https://www.trulia.com/MD/24_p/",
+    "https://www.trulia.com/MD/25_p/",
+    "https://www.trulia.com/NY/",
+    "https://www.trulia.com/NY/2_p/",
+    "https://www.trulia.com/NY/3_p/",
+    "https://www.trulia.com/NY/4_p/",
+    "https://www.trulia.com/NY/5_p/",
+    "https://www.trulia.com/NY/6_p/",
+    "https://www.trulia.com/NY/7_p/",
+    "https://www.trulia.com/NY/8_p/",
+    "https://www.trulia.com/NY/9_p/",
+    "https://www.trulia.com/NY/10_p/",
+    "https://www.trulia.com/NY/11_p/",
+    "https://www.trulia.com/NY/12_p/",
+    "https://www.trulia.com/NY/13_p/",
+    "https://www.trulia.com/NY/14_p/",
+    "https://www.trulia.com/NY/15_p/",
+    "https://www.trulia.com/NY/16_p/",
+    "https://www.trulia.com/NY/17_p/",
+    "https://www.trulia.com/NY/18_p/",
+    "https://www.trulia.com/NY/19_p/",
+    "https://www.trulia.com/NY/20_p/",
+    "https://www.trulia.com/NY/21_p/",
+    "https://www.trulia.com/NY/22_p/",
+    "https://www.trulia.com/NY/23_p/",
+    "https://www.trulia.com/NY/24_p/",
+    "https://www.trulia.com/NY/25_p/",
+
+    "https://www.trulia.com/OH/Delaware/",
+    "https://www.trulia.com/OH/Delaware/2_p/",
+    "https://www.trulia.com/OH/Delaware/3_p/",
+    "https://www.trulia.com/OH/Delaware/4_p/",
+    "https://www.trulia.com/OH/Delaware/5_p/",
+    "https://www.trulia.com/OH/Delaware/6_p/",
+    "https://www.trulia.com/OH/Delaware/7_p/",
+    "https://www.trulia.com/OH/Delaware/8_p/",
+    "https://www.trulia.com/OH/Delaware/9_p/",
+    "https://www.trulia.com/OH/Delaware/10_p/",
+    "https://www.trulia.com/OH/Delaware/11_p/",
+    "https://www.trulia.com/OH/Delaware/12_p/",
+    "https://www.trulia.com/OH/Delaware/13_p/",
+    "https://www.trulia.com/OH/Delaware/14_p/",
+    "https://www.trulia.com/OH/Delaware/15_p/",
+    "https://www.trulia.com/OH/Delaware/16_p/",
+    "https://www.trulia.com/OH/Delaware/17_p/",
+    "https://www.trulia.com/OH/Delaware/18_p/",
+    "https://www.trulia.com/OH/Delaware/19_p/",
+    "https://www.trulia.com/OH/Delaware/20_p/",
+    "https://www.trulia.com/OH/Delaware/21_p/",
+    "https://www.trulia.com/OH/Delaware/22_p/",
+    "https://www.trulia.com/OH/Delaware/23_p/",
+    "https://www.trulia.com/OH/Delaware/24_p/"
 ];
 
 export const runTruliaScraper = async () => {
@@ -180,37 +254,38 @@ export const runTruliaScraper = async () => {
 
             // Scrape remaining pages (limit to reasonable number for testing)
             // const maxPagesToScrape = totalPages;
-            const maxPagesToScrape = totalPages;
+            // const maxPagesToScrape = totalPages;
 
-            for (let page = 2; page <= maxPagesToScrape; page++) {
-                try {
-                    const pageUrl = `${baseUrl}${page}_p/`;
-                    console.log(`📄 Scraping page ${page}/${totalPages}: ${pageUrl}`);
+            // for (let page = 2; page <= maxPagesToScrape; page++) {
 
-                    // Use the same strategy that worked for page 1
-                    let pageData = null;
-                    if (scrapingBeeWorking) {
-                        pageData = await scrapeTruliaWithScrapingBee(pageUrl);
-                    } else {
-                        pageData = await scrapeTruliaWithPuppeteer(pageUrl);
-                    }
+            //     try {
+            //         const pageUrl = `${baseUrl}${page}_p/`;
+            //         console.log(`📄 Scraping page ${page}/${totalPages}: ${pageUrl}`);
 
-                    if (pageData && pageData.homeLinks.length > 0) {
-                        console.log(`🏠 Page ${page}: Found ${pageData.homeLinks.length} links, ${pageData.actualListings} unique listings`);
-                        await saveTruliaListings(baseUrl, pageData.homeLinks, pageUrl);
-                    } else {
-                        console.log(`⚠️ Page ${page}: No data found, might have reached the end`);
-                        break; // Stop if no more data
-                    }
+            //         // Use the same strategy that worked for page 1
+            //         let pageData = null;
+            //         if (scrapingBeeWorking) {
+            //             pageData = await scrapeTruliaWithScrapingBee(pageUrl);
+            //         } else {
+            //             pageData = await scrapeTruliaWithPuppeteer(pageUrl);
+            //         }
 
-                    // Add delay between pages to be respectful
-                    await new Promise(resolve => setTimeout(resolve, 3000));
+            //         if (pageData && pageData.homeLinks.length > 0) {
+            //             console.log(`🏠 Page ${page}: Found ${pageData.homeLinks.length} links, ${pageData.actualListings} unique listings`);
+            //             await saveTruliaListings(baseUrl, pageData.homeLinks, pageUrl);
+            //         } else {
+            //             console.log(`⚠️ Page ${page}: No data found, might have reached the end`);
+            //             break; // Stop if no more data
+            //         }
 
-                } catch (error: any) {
-                    console.error(`❌ Error scraping page ${page}:`, error.message);
-                    // Continue to next page instead of stopping completely
-                }
-            }
+            //         // Add delay between pages to be respectful
+            //         await new Promise(resolve => setTimeout(resolve, 3000));
+
+            //     } catch (error: any) {
+            //         console.error(`❌ Error scraping page ${page}:`, error.message);
+            //         // Continue to next page instead of stopping completely
+            //     }
+            // }
 
             console.log("✅ Multi-page scraping completed successfully");
         }

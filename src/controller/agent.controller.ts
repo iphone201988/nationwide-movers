@@ -982,6 +982,52 @@ export const getAllMeetings = async (req: Request, res: Response): Promise<any> 
     }
 }
 
+export const agentUpdate = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const agentId = req.params.id;
+
+        console.log(agentId);
+        
+        const { phoneNumber, email, link, comment,address } = req.body;
+
+        const agent = await Agent.findById(agentId);
+
+        if (!agent) {
+            return res.status(404).json({
+                success: true,
+                message: "agent not exist"
+            });
+        }
+        if (phoneNumber) {
+            agent.phoneNumber = phoneNumber;
+        }
+        if (email) {
+            agent.email = email;
+        }
+        if (link) {
+            agent.link = link;
+        }
+        if (comment) {
+            agent.comment = comment
+        }
+        if(address){
+            agent.address=address;
+        }
+        await agent.save();
+
+        res.status(200).json({
+            success: true,
+            message: "agent updated successfully"
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: error instanceof Error ? error.message : "Unknown error",
+        });
+    }
+}
 
 export const agentController = {
     readExcelFile,

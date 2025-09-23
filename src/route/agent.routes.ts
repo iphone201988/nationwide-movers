@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   addMeeting,
+  agentUpdate,
   getAgentDetails,
   getAllContactedAgent,
   getAllMeetings,
@@ -39,5 +40,6 @@ agentRouter.post("/give-feedback", validate(givefeedbackSchema), givefeedback);
 agentRouter.post("/meeting", validate(addMeetingSchema), addMeeting);
 agentRouter.put("/meeting/complete", validate(updateMeetingSchema), markMeetingCompleted);
 agentRouter.get("/meeting/all", validate(getMeetingSchema), getAllMeetings);
+agentRouter.put("/agent/update/:id",agentUpdate);
 
 export default agentRouter;
