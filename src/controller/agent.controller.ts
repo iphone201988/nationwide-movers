@@ -904,8 +904,7 @@ export const sendBulkSMS = async (req: Request, res: Response) => {
             await client.messages.create({
                 body: message,
                 from: process.env.TWILIO_FROM,
-                // to: `+1${agent?.phoneNumber.replace(/\D/g, "")}`
-                to: `+918294335230`
+                to: `+1${agent?.phoneNumber.replace(/\D/g, "")}`
             });
 
             if (i !== totalCount - 1) {
