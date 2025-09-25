@@ -12,6 +12,8 @@ import twilio from "twilio";
 import "dotenv/config";
 import ContactedAgent from '../model/contactedAgent.model';
 import Meeting from '../model/meeting.model';
+import momentTimeZone from "moment-timezone";
+
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -869,6 +871,61 @@ export const sendSMS = async (req: Request, res: Response) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+export const sendBulkSMS = async (req: Request, res: Response) => {
+    try {
+        const {
+            agentId,
+            message,
+            totalCount,   // number of SMS to send
+            randomDelay,
+            minDelay,     // in seconds
+            maxDelay      // in seconds
+        } = req.body;
+
+        if (!message || !totalCount) {
+            return res.status(400).json({ success: false, message: "Recipient, message, and total count are required" });
+        }
+
+        const agent = await Agent.findById(agentId);
+
+        if (!agent) {
+            return res.status(404).json({
+                success: false,
+                message: "Agent not found"
+            })
+        }
+
+        let sanitizedMinDelay = minDelay < 1 ? 1 : minDelay;
+        let sanitizedMaxDelay = maxDelay < sanitizedMinDelay ? sanitizedMinDelay : maxDelay;
+        sanitizedMaxDelay = sanitizedMaxDelay > 30 ? 30 : sanitizedMaxDelay;
+
+        for (let i = 0; i < totalCount; i++) {
+            await client.messages.create({
+                body: message,
+                from: process.env.TWILIO_FROM,
+                // to: `+1${agent?.phoneNumber.replace(/\D/g, "")}`
+                to: `+918294335230`
+            });
+
+            if (i !== totalCount - 1) {
+                let delayInSeconds: number;
+                if (randomDelay) {
+                    delayInSeconds = Math.floor(Math.random() * (sanitizedMaxDelay - 1 + 1)) + 1;
+                } else {
+                    delayInSeconds = sanitizedMinDelay;
+                }
+                await new Promise(r => setTimeout(r, delayInSeconds * 1000));
+            }
+        }
+
+        return res.json({ success: true, message: "Bulk SMS processing started" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: "Failed to send messages" });
+    }
+};
+
 
 export const getAllContactedAgent = async (req: Request, res: Response): Promise<any> => {
     try {

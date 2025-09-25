@@ -7,6 +7,7 @@ import * as cheerio from "cheerio";
 import Listing from "../model/listing.model";
 import Agent from "../model/agent.model";
 import "dotenv/config";
+import { getLatLngFromAddress } from "./googleMap.service";
 
 const API_KEY = process.env.API_KEY_SCRAP_BEE;
 const BASE_URL = "https://app.scrapingbee.com/api/v1/";
@@ -96,7 +97,6 @@ export const scrapWithScrapingBee = async (pageUrl: string): Promise<string | nu
     return null;
 };
 
-
 const saveScrapedData = async (scrapedData: any) => {
     try {
         let agentDoc = null;
@@ -105,27 +105,41 @@ const saveScrapedData = async (scrapedData: any) => {
         console.log("🤵 Agent info:", agentInfo);
 
         if (agentInfo) {
-            agentDoc = await Agent.findOne(
-                { phoneNumber: agentInfo?.phone }
-            );
-            if (agentDoc) {
-                agentDoc.fullName = agentInfo.name || agentDoc.fullName;
-                agentDoc.brokerage = agentInfo.brokerage || agentDoc.brokerage;
-                agentDoc.image = agentInfo.image || agentDoc.image;
-                await agentDoc.save();
-            } else {
+            // Find existing agent by phone
+            agentDoc = await Agent.findOne({ phoneNumber: agentInfo?.phone });
+
+            if (!agentDoc) {
+                // Create new agent
                 agentDoc = new Agent({
                     fullName: agentInfo?.name,
                     phoneNumber: agentInfo?.phone,
                     brokerage: agentInfo?.brokerage,
                     image: agentInfo?.image,
                 });
-                await agentDoc.save();
-                console.log("✅ New Agent created:", agentDoc._id);
+            } else {
+                // Update existing agent
+                agentDoc.fullName = agentInfo.name || agentDoc.fullName;
+                agentDoc.brokerage = agentInfo.brokerage || agentDoc.brokerage;
+                agentDoc.image = agentInfo.image || agentDoc.image;
             }
+
+            // Try to enrich agent with location info
+            try {
+                const result = await getLatLngFromAddress(scrapedData.address);
+                if (result) {
+                    agentDoc.lat = result.lat;
+                    agentDoc.lng = result.lng;
+                    agentDoc.timeZone = result.timeZoneId;     // e.g. "Asia/Kolkata"
+                }
+            } catch (geoErr) {
+                console.warn("⚠️ Geocoding failed:", geoErr.message);
+            }
+
+            await agentDoc.save();
+            console.log("✅ Agent saved:", agentDoc._id);
         }
 
-
+        // Always create a new listing
         const listingDoc = new Listing({
             title: scrapedData.title,
             price: scrapedData.price,
@@ -144,9 +158,11 @@ const saveScrapedData = async (scrapedData: any) => {
 
         await listingDoc.save();
         console.log("✅ Listing saved with Agent:", listingDoc._id);
-        return listingDoc;
+
+        return { listing: listingDoc, agent: agentDoc };
     } catch (err) {
         console.error("💥 Error saving scraped data:", err);
+        throw err;
     }
 };
 

@@ -12,6 +12,9 @@ export interface IAgent extends Document {
 
     brokerage?: string;
     image?: string;
+    timeZone?: string;
+    lat?: Number;
+    lng?: Number;
 
     createdAt: Date;
     updatedAt: Date;
@@ -33,6 +36,15 @@ const agentSchema = new Schema<IAgent>(
         },
         link: {
             type: String,
+        },
+        timeZone: {
+            type: String,
+        },
+        lat:{
+            type:Number
+        },
+        lng:{
+            type:Number
         },
         comment: {
             type: String,

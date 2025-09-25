@@ -12,6 +12,7 @@ import {
   markMeetingCompleted,
   newAgents,
   newProperty,
+  sendBulkSMS,
   sendSMS,
   uploadAndAnalyzeExcel,
 } from '../controller/agent.controller';
@@ -32,6 +33,7 @@ agentRouter.get("/property/new-property", newProperty);
 
 agentRouter.get("/property/:id", getPropertyDetail);
 agentRouter.post("/send-sms", sendSMS);
+agentRouter.post("/sms/bulk", sendBulkSMS);
 agentRouter.get("/get-contacted-agents", getAllContactedAgent);
 
 agentRouter.post("/give-feedback", validate(givefeedbackSchema), givefeedback);
