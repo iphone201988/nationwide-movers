@@ -13,6 +13,9 @@ import "dotenv/config";
 import ContactedAgent from '../model/contactedAgent.model';
 import Meeting from '../model/meeting.model';
 import momentTimeZone from "moment-timezone";
+import * as brevo from "@getbrevo/brevo";
+import { createStaticEmailTemplate } from '../utils/html.template';
+import "dotenv/config";
 
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -1109,6 +1112,188 @@ export const agentUpdate = async (req: Request, res: Response): Promise<any> => 
         });
     }
 }
+
+// export const emailAgents = async (req: Request, res: Response): Promise<any> => {
+//     try {
+//         const { agentId, message, email, fullName, phoneNumber } = req.body;
+
+//         if (!agentId || !message) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "Agent ID and message are required"
+//             });
+//         }
+
+//         if (!process.env.BREVO_API_KEY) {
+//             throw new Error('Missing BREVO_API_KEY environment variable.');
+//         }
+
+//         const agent = await Agent.findById(agentId);
+
+//         if (!agent) {
+//             return res.status(404).json({
+//                 success: false,
+//                 message: "Agent not found"
+//             });
+//         }
+
+//         if (!agent.email) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "Agent email not found"
+//             });
+//         }
+
+//         const staticSenderDetails = {
+//             senderName: fullName || "Anthony Booker",
+//             senderTitle: "Realtor Relations Manager",
+//             senderCompany: "Nationwide USA Movers",
+//             senderEmail: email || "abooker@nationwideusamovers.com",
+//             senderPhone: phoneNumber || "(555) 123-4567",
+//             serviceType: "Professional Moving Services",
+//             headerColor: "#2c5aa0",
+//             accentColor: "#1e3a8a"
+//         };
+
+//         const htmlContent = createStaticEmailTemplate({
+//             recipientCompany: agent.brokerage || agent.fullName || "Valued Partner",
+//             recipientName: agent.fullName,
+//             recipientAddress: agent.address,
+//             ...staticSenderDetails,
+//             message: message
+//         });
+
+//         let apiInstance = new brevo.TransactionalEmailsApi() as any;
+//         let apiKey = apiInstance.authentications['apiKey'];
+//         apiKey.apiKey = process.env.BREVO_API_KEY;
+
+//         let emailCampaigns = new brevo.SendSmtpEmail();
+//         emailCampaigns.subject = `Partnership Opportunity - ${staticSenderDetails.senderCompany}`;
+//         emailCampaigns.sender = {
+//             name: `${staticSenderDetails.senderName} - ${staticSenderDetails.senderCompany}`,
+//             email: staticSenderDetails.senderEmail
+//         };
+//         emailCampaigns.to = [{
+//             email: agent.email,
+//             name: agent.fullName || "Valued Partner"
+//         }];
+//         emailCampaigns.htmlContent = htmlContent;
+
+//         const response = await apiInstance.sendTransacEmail(emailCampaigns) as any;
+
+//         await Agent.findByIdAndUpdate(agentId, {
+//             comment: `Email sent on ${new Date().toISOString()}: ${message.substring(0, 50)}...`
+//         });
+
+//         return res.status(200).json({
+//             success: true,
+//             message: "Email sent successfully",
+//             messageId: response.messageId,
+//             sentTo: {
+//                 email: agent.email,
+//                 name: agent.fullName,
+//                 brokerage: agent.brokerage
+//             }
+//         });
+
+//     } catch (error) {
+//         console.error('Email sending error:', error);
+//         return res.status(500).json({
+//             success: false,
+//             message: error instanceof Error ? error.message : "Unknown error",
+//         });
+//     }
+// };
+
+
+export const emailAgents = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { agentId, message, email, fullName, phoneNumber } = req.body;
+
+        if (!agentId || !message) {
+            return res.status(400).json({
+                success: false,
+                message: "Agent ID and message are required"
+            });
+        }
+
+        if (!process.env.BREVO_API_KEY) {
+            throw new Error('Missing BREVO_API_KEY environment variable.');
+        }
+
+        const agent = await Agent.findById(agentId);
+
+        if (!agent) {
+            return res.status(404).json({ success: false, message: "Agent not found" });
+        }
+
+        if (!agent.email) {
+            return res.status(400).json({ success: false, message: "Agent email not found" });
+        }
+
+        const staticSenderDetails = {
+            senderName: fullName || "Anthony Booker",
+            senderTitle: "Realtor Relations Manager",
+            senderCompany: "Nationwide USA Movers",
+            senderEmail: email || "abooker@nationwideusamovers.com",
+            senderPhone: phoneNumber || "(555) 123-4567",
+            serviceType: "Professional Moving Services",
+            headerColor: "#2c5aa0",
+            accentColor: "#1e3a8a"
+        };
+
+        const htmlContent = createStaticEmailTemplate({
+            recipientCompany: agent.brokerage || agent.fullName || "Valued Partner",
+            recipientName: agent.fullName,
+            recipientAddress: agent.address,
+            ...staticSenderDetails,
+            message: message
+        });
+
+        const apiInstance = new brevo.TransactionalEmailsApi();
+        apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
+        
+
+        let emailCampaigns = new brevo.SendSmtpEmail();
+
+        emailCampaigns.subject = `Partnership Opportunity - ${staticSenderDetails.senderCompany}`;
+        emailCampaigns.sender = {
+            name: `${staticSenderDetails.senderName} - ${staticSenderDetails.senderCompany}`,
+            email: staticSenderDetails.senderEmail
+        };
+        emailCampaigns.to = [{
+            email: agent.email,
+            name: agent.fullName || "Valued Partner"
+        }];
+        emailCampaigns.htmlContent = htmlContent;
+
+        const response = await apiInstance.sendTransacEmail(emailCampaigns) as any;
+
+        await Agent.findByIdAndUpdate(agentId, {
+            comment: `Email sent on ${new Date().toISOString()}: ${message.substring(0, 50)}...`
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Email sent successfully",
+            messageId: response.messageId,
+            sentTo: {
+                email: agent.email,
+                name: agent.fullName,
+                brokerage: agent.brokerage
+            }
+        });
+
+    } catch (error) {
+        console.error('Email sending error:', error);
+        return res.status(500).json({
+            success: false,
+            message: error instanceof Error ? error.message : "Unknown error",
+        });
+    }
+};
+
+
 
 export const agentController = {
     readExcelFile,

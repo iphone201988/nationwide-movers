@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   addMeeting,
   agentUpdate,
+  emailAgents,
   getAgentDetails,
   getAllContactedAgent,
   getAllMeetings,
@@ -43,5 +44,6 @@ agentRouter.post("/meeting", validate(addMeetingSchema), addMeeting);
 agentRouter.put("/meeting/complete", validate(updateMeetingSchema), markMeetingCompleted);
 agentRouter.get("/meeting/all", validate(getMeetingSchema), getAllMeetings);
 agentRouter.put("/agent/update/:id",agentUpdate);
+agentRouter.post("/agent/email",emailAgents);
 
 export default agentRouter;
