@@ -1233,10 +1233,10 @@ export const emailAgents = async (req: Request, res: Response): Promise<any> => 
 
         const staticSenderDetails = {
             senderName: fullName || "Anthony Booker",
-            senderTitle: "Realtor Relations Manager",
+            senderTitle: "Manager",
             senderCompany: "Nationwide USA Movers",
-            senderEmail: email || "abooker@nationwideusamovers.com",
-            senderPhone: phoneNumber || "(555) 123-4567",
+            senderEmail: "movingbiz@aol.com",
+            senderPhone: phoneNumber || "+19177741655",
             serviceType: "Professional Moving Services",
             headerColor: "#2c5aa0",
             accentColor: "#1e3a8a"
@@ -1252,7 +1252,7 @@ export const emailAgents = async (req: Request, res: Response): Promise<any> => 
 
         const apiInstance = new brevo.TransactionalEmailsApi();
         apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
-        
+
 
         let emailCampaigns = new brevo.SendSmtpEmail();
 
@@ -1261,6 +1261,10 @@ export const emailAgents = async (req: Request, res: Response): Promise<any> => 
             name: `${staticSenderDetails.senderName} - ${staticSenderDetails.senderCompany}`,
             email: staticSenderDetails.senderEmail
         };
+        emailCampaigns.replyTo = {
+    name: "Anthony Booker",
+    email: "movingbiz@aol.com"  // replies go here
+};
         emailCampaigns.to = [{
             email: agent.email,
             name: agent.fullName || "Valued Partner"
@@ -1272,6 +1276,9 @@ export const emailAgents = async (req: Request, res: Response): Promise<any> => 
         await Agent.findByIdAndUpdate(agentId, {
             comment: `Email sent on ${new Date().toISOString()}: ${message.substring(0, 50)}...`
         });
+
+        console.log("response", response.body.messageId);
+
 
         return res.status(200).json({
             success: true,
