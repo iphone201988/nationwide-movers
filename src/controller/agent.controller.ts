@@ -1303,22 +1303,22 @@ export const agentUpdate = async (
       agent.address = address;
     }
     if (zillow) {
-      agent.zillow = address;
+      agent.zillow = zillow;
     }
     if (linkedIn) {
-      agent.linkedIn = address;
+      agent.linkedIn = linkedIn;
     }
     if (facebook) {
-      agent.facebook = address;
+      agent.facebook = facebook;
     }
     if (webLink) {
-      agent.webLink = address;
+      agent.webLink = webLink;
     }
     if (listingLink) {
-      agent.listingLink = address;
+      agent.listingLink = listingLink;
     }
     if (other) {
-      agent.other = address;
+      agent.other = other;
     }
     if (raState) {
       agent.raState = raState;
@@ -1425,22 +1425,22 @@ export const agentAdd = async (req: Request, res: Response): Promise<any> => {
       agent.address = address;
     }
     if (zillow) {
-      agent.zillow = address;
+      agent.zillow = zillow;
     }
     if (linkedIn) {
-      agent.linkedIn = address;
+      agent.linkedIn = linkedIn;
     }
     if (facebook) {
-      agent.facebook = address;
+      agent.facebook = facebook;
     }
     if (webLink) {
-      agent.webLink = address;
+      agent.webLink = webLink;
     }
     if (listingLink) {
-      agent.listingLink = address;
+      agent.listingLink = listingLink;
     }
     if (other) {
-      agent.other = address;
+      agent.other = other;
     }
     if (raState) {
       agent.raState = raState;
