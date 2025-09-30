@@ -1,6 +1,7 @@
-import { Router } from 'express';
+import { Router } from "express";
 import {
   addMeeting,
+  agentAdd,
   agentUpdate,
   emailAgents,
   getAgentDetails,
@@ -16,13 +17,19 @@ import {
   sendBulkSMS,
   sendSMS,
   uploadAndAnalyzeExcel,
-} from '../controller/agent.controller';
-import { validate } from '../middlewares/validate.middlewares';
-import { addMeetingSchema, getMeetingSchema, givefeedbackSchema, updateMeetingSchema } from '../schema/app.schema';
+} from "../controller/agent.controller";
+import { validate } from "../middlewares/validate.middlewares";
+import {
+  addMeetingSchema,
+  getMeetingSchema,
+  givefeedbackSchema,
+  updateMeetingSchema,
+} from "../schema/app.schema";
+import upload from "../middlewares/multer.middleware";
 
 const agentRouter = Router();
 
-agentRouter.post('/upload-excel', uploadAndAnalyzeExcel);
+agentRouter.post("/upload-excel", uploadAndAnalyzeExcel);
 
 agentRouter.get("/home", home);
 agentRouter.get("/new-agents", newAgents);
@@ -39,11 +46,58 @@ agentRouter.get("/get-contacted-agents", getAllContactedAgent);
 
 agentRouter.post("/give-feedback", validate(givefeedbackSchema), givefeedback);
 
-
 agentRouter.post("/meeting", validate(addMeetingSchema), addMeeting);
-agentRouter.put("/meeting/complete", validate(updateMeetingSchema), markMeetingCompleted);
+agentRouter.put(
+  "/meeting/complete",
+  validate(updateMeetingSchema),
+  markMeetingCompleted
+);
 agentRouter.get("/meeting/all", validate(getMeetingSchema), getAllMeetings);
-agentRouter.put("/agent/update/:id",agentUpdate);
-agentRouter.post("/agent/email",emailAgents);
+agentRouter.put(
+  "/agent/update/:id",
+  upload.fields([
+    {
+      name: "letter",
+      maxCount: 1,
+    },
+    {
+      name: "discountCard",
+      maxCount: 1,
+    },
+    {
+      name: "brochure",
+      maxCount: 1,
+    },
+    {
+      name: "otherFile",
+      maxCount: 1,
+    },
+  ]),
+  agentUpdate
+);
+
+agentRouter.post(
+  "/agent/add",
+  upload.fields([
+    {
+      name: "letter",
+      maxCount: 1,
+    },
+    {
+      name: "discountCard",
+      maxCount: 1,
+    },
+    {
+      name: "brochure",
+      maxCount: 1,
+    },
+    {
+      name: "otherFile",
+      maxCount: 1,
+    },
+  ]),
+  agentAdd
+);
+agentRouter.post("/agent/email", emailAgents);
 
 export default agentRouter;
