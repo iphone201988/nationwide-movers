@@ -1270,6 +1270,7 @@ export const agentUpdate = async (
       discountCodeCoupon,
       raMailingAddress,
       referredBy,
+      numberOfListings,
     } = req.body;
 
     const agent = await Agent.findById(agentId);
@@ -1291,6 +1292,9 @@ export const agentUpdate = async (
     }
     if (link) {
       agent.link = link;
+    }
+    if (numberOfListings) {
+      agent.numberOfListings = numberOfListings;
     }
     if (comment) {
       agent.comment = comment;
@@ -1383,6 +1387,7 @@ export const agentAdd = async (req: Request, res: Response): Promise<any> => {
       discountCodeCoupon,
       raMailingAddress,
       referredBy,
+      numberOfListings,
     } = req.body;
 
     const agent: any = {};
@@ -1406,6 +1411,9 @@ export const agentAdd = async (req: Request, res: Response): Promise<any> => {
     }
     if (email) {
       agent.email = email;
+    }
+    if (numberOfListings) {
+      agent.numberOfListings = numberOfListings;
     }
     if (link) {
       agent.link = link;
