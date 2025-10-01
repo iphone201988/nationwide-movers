@@ -31,7 +31,7 @@ export const getFiles = (req: Request, fileNames: Array<string>) => {
     if (req.files && req.files[fileKey]) {
       files[fileKey] = req.files[fileKey].map((file: any) => {
         console.log("file:::", file);
-        return "uploads/" + file.filename;
+        return process.env.BACKEND_URL + "/uploads/" + file.filename;
       });
     }
   });
