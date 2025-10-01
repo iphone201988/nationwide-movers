@@ -79,7 +79,7 @@ app.use(errorHandler);
 
 app.use(
   "/uploads",
-  express.static(path.resolve(path.join(__dirname, "../src/uploads")))
+  express.static(path.resolve(path.join(__dirname, "./src/uploads")))
 );
 
 
