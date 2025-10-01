@@ -77,6 +77,11 @@ app.listen(PORT, () => {
 
 app.use(errorHandler);
 
+app.use(
+  "/uploads",
+  express.static(path.resolve(path.join(__dirname, "../src/uploads")))
+);
+
 
 //Main function to run the scraper
 // runTruliaScraper();
