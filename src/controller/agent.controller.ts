@@ -1273,6 +1273,8 @@ export const agentUpdate = async (
       numberOfListings,
     } = req.body;
 
+    console.log("req.body:::", req.body);
+
     const agent = await Agent.findById(agentId);
 
     if (!agent) {
@@ -1282,7 +1284,13 @@ export const agentUpdate = async (
       });
     }
 
-    const files = getFiles(req, ["letter,discountCard,brochure", "otherFile"]);
+    const files = getFiles(req, [
+      "letter",
+      "discountCard",
+      "brochure",
+      "otherFile",
+    ]);
+    console.log("files;:::::", files);
 
     if (phoneNumber) {
       agent.phoneNumber = phoneNumber;
@@ -1392,8 +1400,13 @@ export const agentAdd = async (req: Request, res: Response): Promise<any> => {
 
     const agent: any = {};
 
-    const files = getFiles(req, ["letter,discountCard,brochure", "otherFile"]);
-
+    const files = getFiles(req, [
+      "letter",
+      "discountCard",
+      "brochure",
+      "otherFile",
+    ]);
+    
     if (fullName) {
       agent.fullName = fullName;
     }

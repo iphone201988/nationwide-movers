@@ -10,12 +10,6 @@ if (!fs.existsSync(dir)) {
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    if (file.mimetype !== "application/pdf") {
-      return cb(
-        new Error(`Only PDF files are allowed for the ${file.fieldname}`),
-        null
-      );
-    }
     cb(null, dir);
   },
   filename: function (req, file, cb) {

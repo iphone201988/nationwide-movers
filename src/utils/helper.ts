@@ -26,11 +26,13 @@ export const generateToken = (
 export const getFiles = (req: Request, fileNames: Array<string>) => {
   // Multiple files uploaded
   const files: any = {};
+  console.log("req.files::::", req.files);
   fileNames.forEach((fileKey: string) => {
     if (req.files && req.files[fileKey]) {
-      files[fileKey] = req.files[fileKey].map(
-        (file: any) => process.env.BACKEND_URL + file.filename
-      );
+      files[fileKey] = req.files[fileKey].map((file: any) => {
+        console.log("file:::", file);
+        return "uploads/" + file.filename;
+      });
     }
   });
   if (Object.keys(files).length) return files;

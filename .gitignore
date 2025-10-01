@@ -7,4 +7,4 @@ package-lock.json
 *.html
 realtor.scrapping.ts
 Realtor_Database_Daily_Work_1756195436.xlsx
-
+src/uploads
