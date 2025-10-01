@@ -72,6 +72,10 @@ agentRouter.put(
       name: "otherFile",
       maxCount: 1,
     },
+    {
+      name: "profileImage",
+      maxCount: 1,
+    },
   ]),
   agentUpdate
 );

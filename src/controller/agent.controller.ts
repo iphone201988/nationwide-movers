@@ -1405,8 +1405,9 @@ export const agentAdd = async (req: Request, res: Response): Promise<any> => {
       "discountCard",
       "brochure",
       "otherFile",
+      "profileImage"
     ]);
-    
+
     if (fullName) {
       agent.fullName = fullName;
     }
@@ -1482,6 +1483,9 @@ export const agentAdd = async (req: Request, res: Response): Promise<any> => {
     }
     if (files?.otherFile && files?.otherFile.length) {
       agent.otherFile = files?.otherFile[0];
+    }
+    if (files?.profileImage && files?.profileImage.length) {
+      agent.profileImage = files?.profileImage[0];
     }
 
     await Agent.create(agent);
