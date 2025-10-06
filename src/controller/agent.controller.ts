@@ -1289,6 +1289,7 @@ export const agentUpdate = async (
       "discountCard",
       "brochure",
       "otherFile",
+      "profileImage"
     ]);
     console.log("files;:::::", files);
 
@@ -1355,6 +1356,9 @@ export const agentUpdate = async (
     }
     if (files?.otherFile && files?.otherFile.length) {
       agent.otherFile = files?.otherFile[0];
+    }
+    if(files?.profileImage && files?.profileImage?.length){
+        agent.profileImage = files?.profileImage[0];
     }
 
     await agent.save();
