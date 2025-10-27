@@ -866,7 +866,7 @@ export const getAllProperty = async (
     const filteredListing = await Promise.all(
       listing.map(async (item) => {
         const agent = await Agent.findById(item.agentId).select(
-          "_id fullName phoneNumber address brokerage image"
+          "_id fullName countryCode phoneNumber address brokerage image"
         );
 
         return {
@@ -874,6 +874,7 @@ export const getAllProperty = async (
           agentId: agent?._id || null,
           fullName: agent?.fullName || null,
           phoneNumber: agent?.phoneNumber || null,
+          countryCode: agent?.countryCode || null,
           brokerage: agent?.brokerage || null,
           image: agent?.image || null,
         };
@@ -930,13 +931,14 @@ export const newProperty = async (
     const filteredNewProperty = await Promise.all(
       newListing.map(async (item) => {
         const agent = await Agent.findById(item.agentId).select(
-          "_id fullName phoneNumber address brokerage image"
+          "_id fullName countryCode phoneNumber address brokerage image"
         );
         return {
           ...item.toObject(),
           agentId: agent?._id || null,
           fullName: agent?.fullName || null,
           phoneNumber: agent?.phoneNumber || null,
+          countryCode: agent?.countryCode || null,
           brokerage: agent?.brokerage || null,
           image: agent?.image || null,
         };
