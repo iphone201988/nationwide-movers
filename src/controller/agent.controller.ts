@@ -1107,7 +1107,7 @@ export const getAllContactedAgent = async (
 
     const [agents, total] = await Promise.all([
       ContactedAgent.find()
-        .populate("agentId", "fullName email phoneNumber image")
+        .populate("agentId", "fullName email phoneNumber countryCode image")
         .sort({ contactedAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -1221,7 +1221,7 @@ export const getAllMeetings = async (
     const skip = (page - 1) * limit;
     const [meetings, total] = await Promise.all([
       Meeting.find()
-        .populate("agentId", "fullName email phoneNumber")
+        .populate("agentId", "fullName email phoneNumber countryCode")
         .sort({ meetingDate: -1, meetingTime: -1 })
         .skip(skip)
         .limit(limit)
@@ -1271,6 +1271,7 @@ export const agentUpdate = async (
       raMailingAddress,
       referredBy,
       numberOfListings,
+      countryCode
     } = req.body;
 
     console.log("req.body:::", req.body);
@@ -1360,6 +1361,10 @@ export const agentUpdate = async (
     if(files?.profileImage && files?.profileImage?.length){
         agent.profileImage = files?.profileImage[0];
     }
+    if(countryCode){
+      agent.countryCode=countryCode;
+    }
+
 
     await agent.save();
 

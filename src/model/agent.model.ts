@@ -5,6 +5,7 @@ export interface IAgent extends Document {
   fullName?: string;
   email?: string;
   phoneNumber?: string;
+  countryCode?: string;
   profileImage?: string;
   address?: string;
   link?: string;
@@ -44,6 +45,7 @@ const agentSchema = new Schema<IAgent>(
     fullName: { type: String },
     email: { type: String, default: null },
     phoneNumber: { type: String },
+    countryCode: { type: String },
     profileImage: { type: String, default: null },
     address: { type: String, default: null },
     brokerage: { type: String, default: null },

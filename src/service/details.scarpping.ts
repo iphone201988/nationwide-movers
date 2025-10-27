@@ -115,12 +115,14 @@ const saveScrapedData = async (scrapedData: any) => {
                     phoneNumber: agentInfo?.phone,
                     brokerage: agentInfo?.brokerage,
                     image: agentInfo?.image,
+                    countryCode:"+1"
                 });
             } else {
                 // Update existing agent
                 agentDoc.fullName = agentInfo.name || agentDoc.fullName;
                 agentDoc.brokerage = agentInfo.brokerage || agentDoc.brokerage;
                 agentDoc.image = agentInfo.image || agentDoc.image;
+                agentDoc.countryCode="+1";
             }
 
             // Try to enrich agent with location info
@@ -169,7 +171,7 @@ const saveScrapedData = async (scrapedData: any) => {
 export const loadLocalHtmlWithPuppeteer = async (localFilePath: string) => {
     let browser: any;
     try {
-        browser = await puppeteer.launch({ headless: false });
+        browser = await puppeteer.launch({ headless: true });
 
         const page = await browser.newPage();
 

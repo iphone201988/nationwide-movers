@@ -1247,7 +1247,7 @@ const scrapeTruliaWithPuppeteer = async (pageUrl: string): Promise<{ totalResult
         console.log("🎭 Using Puppeteer to scrape:", pageUrl);
 
         browser = await puppeteer.launch({
-            headless: false,
+            headless: true,
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
