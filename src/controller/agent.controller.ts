@@ -317,8 +317,7 @@ export async function readExcelFile(filePath: string): Promise<ExcelData> {
         `Pre-filtered from ${mappedData.length} to ${preFilteredData.length} rows`
       );
       console.log(
-        `Removed ${
-          mappedData.length - preFilteredData.length
+        `Removed ${mappedData.length - preFilteredData.length
         } header rows in pre-filter`
       );
 
@@ -458,8 +457,7 @@ export async function readExcelFile(filePath: string): Promise<ExcelData> {
     };
   } catch (error) {
     throw new Error(
-      `Error reading Excel file: ${
-        error instanceof Error ? error.message : "Unknown error"
+      `Error reading Excel file: ${error instanceof Error ? error.message : "Unknown error"
       }`
     );
   }
@@ -483,8 +481,7 @@ export async function readExcelSheet(
     return excelData.data[sheetName];
   } catch (error) {
     throw new Error(
-      `Error reading sheet '${sheetName}': ${
-        error instanceof Error ? error.message : "Unknown error"
+      `Error reading sheet '${sheetName}': ${error instanceof Error ? error.message : "Unknown error"
       }`
     );
   }
@@ -502,8 +499,7 @@ export async function getExcelInfo(
     };
   } catch (error) {
     throw new Error(
-      `Error getting Excel info: ${
-        error instanceof Error ? error.message : "Unknown error"
+      `Error getting Excel info: ${error instanceof Error ? error.message : "Unknown error"
       }`
     );
   }
@@ -601,8 +597,7 @@ export async function uploadAndAnalyzeExcel(
                 { new: true }
               );
               console.log(
-                `Updated existing realtor: ${
-                  transformedRealtor.fullName || transformedRealtor.name
+                `Updated existing realtor: ${transformedRealtor.fullName || transformedRealtor.name
                 }`
               );
             } else {
@@ -610,8 +605,7 @@ export async function uploadAndAnalyzeExcel(
               const newRealtor = new Realtor(transformedRealtor);
               await newRealtor.save();
               console.log(
-                `Created new realtor: ${
-                  transformedRealtor.fullName || transformedRealtor.name
+                `Created new realtor: ${transformedRealtor.fullName || transformedRealtor.name
                 }`
               );
             }
@@ -1019,11 +1013,15 @@ export const sendSMS = async (req: Request, res: Response) => {
 
     let message = body;
 
+    const countryCode = agent?.countryCode || "+1";
+    const phoneNumber = agent?.phoneNumber?.replace(/\D/g, "") || "";
+
     await client.messages.create({
       body: message,
       from: process.env.TWILIO_FROM,
-      to: `+1${agent?.phoneNumber.replace(/\D/g, "")}`,
+      to: `${countryCode}${phoneNumber}`,
     });
+
 
     //Add in the contacted model
     await ContactedAgent.create({ agentId });
@@ -1068,11 +1066,14 @@ export const sendBulkSMS = async (req: Request, res: Response) => {
       maxDelay < sanitizedMinDelay ? sanitizedMinDelay : maxDelay;
     sanitizedMaxDelay = sanitizedMaxDelay > 30 ? 30 : sanitizedMaxDelay;
 
+    const countryCode = agent?.countryCode || "+1";
+    const phoneNumber = agent?.phoneNumber?.replace(/\D/g, "") || "";
+
     for (let i = 0; i < totalCount; i++) {
       await client.messages.create({
         body: message,
         from: process.env.TWILIO_FROM,
-        to: `+1${agent?.phoneNumber.replace(/\D/g, "")}`,
+        to: `${countryCode}${phoneNumber}`,
       });
 
       if (i !== totalCount - 1) {
@@ -1358,11 +1359,11 @@ export const agentUpdate = async (
     if (files?.otherFile && files?.otherFile.length) {
       agent.otherFile = files?.otherFile[0];
     }
-    if(files?.profileImage && files?.profileImage?.length){
-        agent.profileImage = files?.profileImage[0];
+    if (files?.profileImage && files?.profileImage?.length) {
+      agent.profileImage = files?.profileImage[0];
     }
-    if(countryCode){
-      agent.countryCode=countryCode;
+    if (countryCode) {
+      agent.countryCode = countryCode;
     }
 
 
