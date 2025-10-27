@@ -690,7 +690,7 @@ export const home = async (req: Request, res: Response): Promise<any> => {
   try {
     // --- Pagination ---
     const limit = req.query.limit
-      ? parseInt(req.query.limit.toString(), 10)
+       ? parseInt(req.query.limit.toString(), 10)
       : 10;
     const page = req.query.page ? parseInt(req.query.page.toString(), 10) : 1;
 
@@ -976,13 +976,17 @@ export const getPropertyDetail = async (
     }
 
     const agent = await Agent.findById(listing.agentId)
-      .select("_id fullName phoneNumber address brokerage image")
+      .select("_id fullName countryCode phoneNumber address brokerage image")
       .lean();
+
+    console.log("agent",agent);
+      
 
     const responseData = {
       ...listing,
       fullName: agent?.fullName || null,
       phoneNumber: agent?.phoneNumber || null,
+      countryCode: agent?.countryCode || null,
       brokerage: agent?.brokerage || null,
       image: agent?.image || null,
     };
