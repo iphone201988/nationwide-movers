@@ -808,7 +808,7 @@ export const getAgentDetails = async (
       });
     }
 
-    agent.isView = agent.isView ?? true;
+    agent.isView = true;
     await agent.save();
 
 
