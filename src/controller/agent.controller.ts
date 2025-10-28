@@ -970,7 +970,7 @@ export const getPropertyDetail = async (
   try {
     const { id } = req.params;
 
-    const listing = await Listing.findById(id).lean(); // lean for performance
+    const listing = await Listing.findById(id);
     if (!listing) {
       res.status(404).json({
         success: false,
@@ -990,7 +990,7 @@ export const getPropertyDetail = async (
 
 
     const responseData = {
-      ...listing,
+      ...listing.toObject(),
       fullName: agent?.fullName || null,
       phoneNumber: agent?.phoneNumber || null,
       countryCode: agent?.countryCode || null,
