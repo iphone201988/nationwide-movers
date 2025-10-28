@@ -39,6 +39,7 @@ export interface IListing extends Document {
 
     createdAt: Date;
     updatedAt: Date;
+    isView: boolean;
 }
 
 const listingSchema = new Schema<IListing>(
@@ -96,6 +97,10 @@ const listingSchema = new Schema<IListing>(
         },
 
         images: [{ type: String }],
+        isView: {
+            type: Boolean,
+            default: false
+        }
     },
     {
         timestamps: true,

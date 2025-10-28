@@ -978,6 +978,9 @@ export const getPropertyDetail = async (
       });
       return;
     }
+    
+    listing.isView=true;
+    await listing.save();
 
     const agent = await Agent.findById(listing.agentId)
       .select("_id fullName countryCode phoneNumber address brokerage image isView")
