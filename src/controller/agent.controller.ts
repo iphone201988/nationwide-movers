@@ -1015,6 +1015,9 @@ export const sendSMS = async (req: Request, res: Response) => {
   try {
     const { agentId, body } = req.body;
 
+    console.log("body",req.body);
+    
+
     const agent = await Agent.findById(agentId);
 
     if (!agent) {
@@ -1029,14 +1032,22 @@ export const sendSMS = async (req: Request, res: Response) => {
     const countryCode = agent?.countryCode || "+1";
     const phoneNumber = agent?.phoneNumber?.replace(/\D/g, "") || "";
 
-    await client.messages.create({
+    const twilioResponse = await client.messages.create({
       body: message,
       from: process.env.TWILIO_FROM,
       to: `${countryCode}${phoneNumber}`,
     });
 
+    if (twilioResponse.status === "failed" || twilioResponse.status === "undelivered") {
+      console.error("Twilio SMS failed:", twilioResponse.errorMessage);
+      return res.status(400).json({
+        success: false,
+        message: `SMS failed: ${twilioResponse.errorMessage || "Unknown error"}`,
+      });
+    }
 
-    //Add in the contacted model
+    console.log("twilioResponse",twilioResponse);
+    
     await ContactedAgent.create({ agentId });
 
     res.status(200).json({ success: true, message: "SMS sent successfully" });

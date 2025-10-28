@@ -341,7 +341,8 @@ export const scrapePropertyData = async (htmlFilePath: string) => {
         // Phone (handles agent-phone or broker-phone)
         const phone =
             $(el).find("[data-testid='agent-phone']").text().replace("Agent Phone:", "").trim() ||
-            $(el).find("[data-testid='broker-phone']").text().replace(",", "").trim();
+            $(el).find("[data-testid='broker-phone']").text().replace(",", "").trim() ||
+            $(el).find("[data-testid='owner-phone']").text().replace("Owner Phone:", "").trim();
 
         const image = $(el).find("img").attr("src");
 
