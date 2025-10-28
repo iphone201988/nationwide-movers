@@ -690,7 +690,7 @@ export const home = async (req: Request, res: Response): Promise<any> => {
   try {
     // --- Pagination ---
     const limit = req.query.limit
-       ? parseInt(req.query.limit.toString(), 10)
+      ? parseInt(req.query.limit.toString(), 10)
       : 10;
     const page = req.query.page ? parseInt(req.query.page.toString(), 10) : 1;
 
@@ -808,6 +808,10 @@ export const getAgentDetails = async (
       });
     }
 
+    agent.isView = agent.isView ?? true;
+    await agent.save();
+
+
     const listings = await Listing.aggregate([
       { $match: { agentId: agent._id } },
       { $sample: { size: 10 } },
@@ -866,7 +870,7 @@ export const getAllProperty = async (
     const filteredListing = await Promise.all(
       listing.map(async (item) => {
         const agent = await Agent.findById(item.agentId).select(
-          "_id fullName countryCode phoneNumber address brokerage image"
+          "_id fullName countryCode phoneNumber address brokerage image isView"
         );
 
         return {
@@ -931,7 +935,7 @@ export const newProperty = async (
     const filteredNewProperty = await Promise.all(
       newListing.map(async (item) => {
         const agent = await Agent.findById(item.agentId).select(
-          "_id fullName countryCode phoneNumber address brokerage image"
+          "_id fullName countryCode phoneNumber address brokerage image isView"
         );
         return {
           ...item.toObject(),
@@ -976,11 +980,11 @@ export const getPropertyDetail = async (
     }
 
     const agent = await Agent.findById(listing.agentId)
-      .select("_id fullName countryCode phoneNumber address brokerage image")
+      .select("_id fullName countryCode phoneNumber address brokerage image isView")
       .lean();
 
-    console.log("agent",agent);
-      
+    console.log("agent", agent);
+
 
     const responseData = {
       ...listing,
@@ -1114,7 +1118,7 @@ export const getAllContactedAgent = async (
 
     const [agents, total] = await Promise.all([
       ContactedAgent.find()
-        .populate("agentId", "fullName email phoneNumber countryCode image")
+        .populate("agentId", "fullName email phoneNumber countryCode image isView")
         .sort({ contactedAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -1228,7 +1232,7 @@ export const getAllMeetings = async (
     const skip = (page - 1) * limit;
     const [meetings, total] = await Promise.all([
       Meeting.find()
-        .populate("agentId", "fullName email phoneNumber countryCode")
+        .populate("agentId", "fullName email phoneNumber countryCode isView")
         .sort({ meetingDate: -1, meetingTime: -1 })
         .skip(skip)
         .limit(limit)

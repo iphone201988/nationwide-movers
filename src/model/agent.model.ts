@@ -38,6 +38,7 @@ export interface IAgent extends Document {
   discountCodeCoupon: string;
   raMailingAddress: string;
   referredBy: string;
+  isView?: boolean;
 }
 
 const agentSchema = new Schema<IAgent>(
@@ -145,6 +146,10 @@ const agentSchema = new Schema<IAgent>(
       type: String,
       default: null,
     },
+    isView: {
+      type: Boolean,
+      default: false
+    }
   },
   {
     timestamps: true,

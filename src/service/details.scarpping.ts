@@ -115,14 +115,16 @@ const saveScrapedData = async (scrapedData: any) => {
                     phoneNumber: agentInfo?.phone,
                     brokerage: agentInfo?.brokerage,
                     image: agentInfo?.image,
-                    countryCode:"+1"
+                    countryCode: "+1",
+                    isView:false,
                 });
             } else {
                 // Update existing agent
                 agentDoc.fullName = agentInfo.name || agentDoc.fullName;
                 agentDoc.brokerage = agentInfo.brokerage || agentDoc.brokerage;
                 agentDoc.image = agentInfo.image || agentDoc.image;
-                agentDoc.countryCode="+1";
+                agentDoc.countryCode = "+1";
+                agentDoc.isView=false;
             }
 
             // Try to enrich agent with location info
@@ -317,30 +319,60 @@ export const scrapePropertyData = async (htmlFilePath: string) => {
             .filter((v) => v.length > 0);
     }
 
-    // 👨‍💼 Agents (both structures supported)
+    // 👨‍💼 Agents (supports all known variations)
     result.agents = [];
 
     // Case 1: agent-contact
     $("[data-testid='agent-contact']").each((_, el) => {
         const name = $(el).find("span[title]").first().attr("title") || "";
         const phone = $(el).find("ul li").last().text().trim() || "";
-
-        if (name || phone) {
-            result.agents.push({ name, phone });
-        }
+        if (name || phone) result.agents.push({ name, phone });
     });
 
-    // Case 2: provider-info
+    // Case 2: provider-info (standard)
     $("[data-testid='provider-info']").each((_, el) => {
         const name = $(el).find("[data-testid='no-form-agent-name']").text().trim();
-        const brokerage = $(el).find("[data-testid='broker-name']").text().trim();
-        const phone = $(el).find("[data-testid='agent-phone']").text().replace("Agent Phone:", "").trim();
+
+        // Brokerage info (plain or link)
+        const brokerageEl = $(el).find("[data-testid='broker-name']");
+        const brokerage = brokerageEl.text().trim();
+        const brokerageLink = brokerageEl.find("a").attr("href") || null;
+
+        // Phone (handles agent-phone or broker-phone)
+        const phone =
+            $(el).find("[data-testid='agent-phone']").text().replace("Agent Phone:", "").trim() ||
+            $(el).find("[data-testid='broker-phone']").text().replace(",", "").trim();
+
         const image = $(el).find("img").attr("src");
 
         if (name || brokerage || phone) {
-            result.agents.push({ name, brokerage, phone, image });
+            result.agents.push({ name, brokerage, brokerageLink, phone, image });
         }
     });
+
+    // Case 3: listing-provided-by (builder / community listings)
+    $("[data-testid='listing-provided-by']").each((_, el) => {
+        const brokerageEl = $(el).find("[data-testid='broker-name']");
+        const brokerage = brokerageEl.text().trim();
+        const brokerageLink = brokerageEl.find("a").attr("href") || null;
+
+        const phone = $(el)
+            .find("[data-testid='broker-phone']")
+            .text()
+            .replace(",", "")
+            .trim();
+
+        if (brokerage || phone) {
+            result.agents.push({
+                name: "",
+                brokerage,
+                brokerageLink,
+                phone,
+                image: null,
+            });
+        }
+    });
+
 
 
 
