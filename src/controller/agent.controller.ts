@@ -770,7 +770,7 @@ export const newAgents = async (req: Request, res: Response): Promise<any> => {
       };
     }
 
-    const newAgent = await Agent.find({
+    let newAgent = await Agent.find({
       ...qry,
       createdAt: {
         $gte: today.toDate(),
@@ -779,6 +779,14 @@ export const newAgents = async (req: Request, res: Response): Promise<any> => {
     })
       .sort({ createdAt: -1 })
       .limit(15);
+
+    if (newAgent.length === 0) {
+      newAgent = await Agent.find({
+        ...qry
+      })
+        .sort({ createdAt: -1 })
+        .limit(20);
+    }
 
     res.status(200).json({
       success: true,
@@ -922,7 +930,7 @@ export const newProperty = async (
       ];
     }
 
-    const newListing = await Listing.find({
+    let newListing = await Listing.find({
       ...qry,
       createdAt: {
         $gte: today.toDate(),
@@ -931,6 +939,15 @@ export const newProperty = async (
     })
       .sort({ createdAt: -1 })
       .limit(15);
+
+    if(newListing.length === 0){
+      newListing = await Listing.find({
+      ...qry
+    })
+      .sort({ createdAt: -1 })
+      .limit(20);
+    }
+    
 
     const filteredNewProperty = await Promise.all(
       newListing.map(async (item) => {
@@ -978,8 +995,8 @@ export const getPropertyDetail = async (
       });
       return;
     }
-    
-    listing.isView=true;
+
+    listing.isView = true;
     await listing.save();
 
     const agent = await Agent.findById(listing.agentId)
@@ -1015,8 +1032,8 @@ export const sendSMS = async (req: Request, res: Response) => {
   try {
     const { agentId, body } = req.body;
 
-    console.log("body",req.body);
-    
+    console.log("body", req.body);
+
 
     const agent = await Agent.findById(agentId);
 
@@ -1046,8 +1063,8 @@ export const sendSMS = async (req: Request, res: Response) => {
       });
     }
 
-    console.log("twilioResponse",twilioResponse);
-    
+    console.log("twilioResponse", twilioResponse);
+
     await ContactedAgent.create({ agentId });
 
     res.status(200).json({ success: true, message: "SMS sent successfully" });
