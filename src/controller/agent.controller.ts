@@ -720,11 +720,11 @@ export const home = async (req: Request, res: Response): Promise<any> => {
 
     // Only apply today's date filter if `all` is NOT true
     if (!all && feedback === undefined) {
-      const today = moment().startOf("day");
-      qry.createdAt = {
-        $gte: today.toDate(),
-        $lt: moment(today).endOf("day").toDate(),
-      };
+      // const today = moment().startOf("day");
+      // qry.createdAt = {
+        // $gte: today.toDate(),
+        // $lt: moment(today).endOf("day").toDate(),
+      // };
     }
 
     console.log("Query being executed:", qry);
