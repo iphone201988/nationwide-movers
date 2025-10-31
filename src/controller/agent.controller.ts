@@ -722,8 +722,8 @@ export const home = async (req: Request, res: Response): Promise<any> => {
     if (!all && feedback === undefined) {
       // const today = moment().startOf("day");
       // qry.createdAt = {
-        // $gte: today.toDate(),
-        // $lt: moment(today).endOf("day").toDate(),
+      // $gte: today.toDate(),
+      // $lt: moment(today).endOf("day").toDate(),
       // };
     }
 
@@ -940,14 +940,14 @@ export const newProperty = async (
       .sort({ createdAt: -1 })
       .limit(15);
 
-    if(newListing.length === 0){
+    if (newListing.length === 0) {
       newListing = await Listing.find({
-      ...qry
-    })
-      .sort({ createdAt: -1 })
-      .limit(20);
+        ...qry
+      })
+        .sort({ createdAt: -1 })
+        .limit(20);
     }
-    
+
 
     const filteredNewProperty = await Promise.all(
       newListing.map(async (item) => {
@@ -1447,6 +1447,7 @@ export const agentAdd = async (req: Request, res: Response): Promise<any> => {
       raMailingAddress,
       referredBy,
       numberOfListings,
+      countryCode = "+1"
     } = req.body;
 
     const agent: any = {};
@@ -1537,6 +1538,9 @@ export const agentAdd = async (req: Request, res: Response): Promise<any> => {
     }
     if (files?.profileImage && files?.profileImage.length) {
       agent.profileImage = files?.profileImage[0];
+    }
+    if (countryCode) {
+      agent.countryCode = countryCode;
     }
 
     await Agent.create(agent);
