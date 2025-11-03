@@ -17,6 +17,7 @@ import * as brevo from "@getbrevo/brevo";
 import { createStaticEmailTemplate } from "../utils/html.template";
 import "dotenv/config";
 import { getFiles } from "../utils/helper";
+import { ScheduleSms } from "../model/scheduleSms.model";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -878,7 +879,7 @@ export const getAllProperty = async (
     const filteredListing = await Promise.all(
       listing.map(async (item) => {
         const agent = await Agent.findById(item.agentId).select(
-          "_id fullName countryCode phoneNumber address brokerage image isView"
+          "_id fullName countryCode phoneNumber address brokerage image isView timeZone"
         );
 
         return {
@@ -889,6 +890,7 @@ export const getAllProperty = async (
           countryCode: agent?.countryCode || null,
           brokerage: agent?.brokerage || null,
           image: agent?.image || null,
+          timeZone:agent?.timeZone
         };
       })
     );
@@ -952,7 +954,7 @@ export const newProperty = async (
     const filteredNewProperty = await Promise.all(
       newListing.map(async (item) => {
         const agent = await Agent.findById(item.agentId).select(
-          "_id fullName countryCode phoneNumber address brokerage image isView"
+          "_id fullName countryCode phoneNumber address brokerage image isView timeZone"
         );
         return {
           ...item.toObject(),
@@ -1000,7 +1002,7 @@ export const getPropertyDetail = async (
     await listing.save();
 
     const agent = await Agent.findById(listing.agentId)
-      .select("_id fullName countryCode phoneNumber address brokerage image isView")
+      .select("_id fullName countryCode phoneNumber address brokerage image isView timeZone")
       .lean();
 
     console.log("agent", agent);
@@ -1149,7 +1151,7 @@ export const getAllContactedAgent = async (
 
     const [agents, total] = await Promise.all([
       ContactedAgent.find()
-        .populate("agentId", "fullName email phoneNumber countryCode image isView")
+        .populate("agentId", "fullName email phoneNumber countryCode image isView timeZone")
         .sort({ contactedAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -1263,7 +1265,7 @@ export const getAllMeetings = async (
     const skip = (page - 1) * limit;
     const [meetings, total] = await Promise.all([
       Meeting.find()
-        .populate("agentId", "fullName email phoneNumber countryCode isView")
+        .populate("agentId", "fullName email phoneNumber countryCode isView timeZone")
         .sort({ meetingDate: -1, meetingTime: -1 })
         .skip(skip)
         .limit(limit)
@@ -1754,6 +1756,100 @@ export const emailAgents = async (
     return res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+
+export const scheduleBulkSMS = async (req: Request, res: Response) => {
+  try {
+    console.log("📩 Received scheduleBulkSMS request:", req.body);
+
+    const {
+      agentId,
+      message,
+      totalCount,
+      randomDelay,
+      minDelay,
+      maxDelay,
+      whenToSend, // Expected as a local date-time string (e.g., '2025-11-03T15:00:00')
+    } = req.body;
+
+    // 🔹 Validate required fields
+    if (!agentId || !message || !totalCount || !whenToSend) {
+      console.warn("⚠️ Missing required fields");
+      return res.status(400).json({
+        success: false,
+        message: "agentId, message, totalCount, and whenToSend are required",
+      });
+    }
+
+    // 🔹 Fetch agent
+    const agent = await Agent.findById(agentId);
+    if (!agent) {
+      console.warn("❌ Agent not found:", agentId);
+      return res.status(404).json({
+        success: false,
+        message: "Agent not found",
+      });
+    }
+
+    // 🔹 Validate agent timezone
+    const agentTimeZone = agent?.timeZone || "UTC";
+    if (!momentTimeZone.tz.zone(agentTimeZone)) {
+      console.warn(`⚠️ Invalid timezone for agent (${agentTimeZone}). Defaulting to UTC.`);
+    }
+
+    // 🔹 Convert agent local time to UTC (server time)
+    const localTime = momentTimeZone.tz(whenToSend, agentTimeZone);
+    if (!localTime.isValid()) {
+      console.error("❌ Invalid whenToSend format or value:", whenToSend);
+      return res.status(400).json({
+        success: false,
+        message: "Invalid whenToSend or timezone format.",
+      });
+    }
+
+    const utcTime = localTime.clone().tz("UTC").toDate();
+    console.log(
+      `🕓 Converted agent time (${agentTimeZone}): ${localTime.format()} → UTC: ${utcTime}`
+    );
+
+    // 🔹 Sanitize delays
+    let sanitizedMinDelay = Math.max(1, Number(minDelay) || 1);
+    let sanitizedMaxDelay = Math.max(sanitizedMinDelay, Number(maxDelay) || sanitizedMinDelay);
+    sanitizedMaxDelay = Math.min(sanitizedMaxDelay, 30);
+
+    console.log("✅ Delay values sanitized:", {
+      sanitizedMinDelay,
+      sanitizedMaxDelay,
+      randomDelay,
+    });
+
+    // 🔹 Save schedule
+    const newSchedule = await ScheduleSms.create({
+      agentId,
+      message,
+      totalCount,
+      randomDelay,
+      minDelay: sanitizedMinDelay,
+      maxDelay: sanitizedMaxDelay,
+      whenToSend: utcTime, // Always store in UTC for consistency
+      status: "pending",
+    });
+
+    console.log("📦 Schedule created successfully:", newSchedule._id);
+
+    return res.status(201).json({
+      success: true,
+      message: `Bulk SMS scheduled successfully for ${localTime.format("YYYY-MM-DD HH:mm:ss")} (${agentTimeZone})`,
+      schedule: newSchedule,
+    });
+  } catch (err: any) {
+    console.error("💥 Error in scheduleBulkSMS:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to schedule bulk SMS",
+      error: err.message,
     });
   }
 };

@@ -13,6 +13,7 @@ import Realtor from "./src/model/realtor.model";
 import Agent from "./src/model/agent.model";
 import { getLatLngFromAddress } from "./src/service/googleMap.service";
 import Listing from "./src/model/listing.model";
+import './src/service/smsScheduler'
 
 dotenv.config();
 
@@ -78,12 +79,12 @@ app.listen(PORT, () => {
 app.use(errorHandler);
 
 app.use(
-  "/uploads",
-  express.static(path.resolve(path.join(__dirname, "./src/uploads")))
+    "/uploads",
+    express.static(path.resolve(path.join(__dirname, "./src/uploads")))
 );
 
 
-//Main function to run the scraper
+// Main function to run the scraper
 // runTruliaScraper();
 
 // (async () => {
@@ -103,9 +104,11 @@ app.use(
 //     }
 // })();
 
+
+
 //       const pageUrl = "https://www.trulia.com/home/39-coldstone-ct-delaware-oh-43015-456301031"; // 👈 your target URL
 //       const pageUrl = "https://www.trulia.com/builder-community-plan/stockdale-farms-charles-2059112312";
-//       const pageUrl = "https://www.trulia.com/home/490-penwell-dr-delaware-oh-43015-454942659"; 
+//       const pageUrl = "https://www.trulia.com/home/490-penwell-dr-delaware-oh-43015-454942659";
 
 
 // (async () => {

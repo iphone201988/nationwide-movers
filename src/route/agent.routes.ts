@@ -14,6 +14,7 @@ import {
   markMeetingCompleted,
   newAgents,
   newProperty,
+  scheduleBulkSMS,
   sendBulkSMS,
   sendSMS,
   uploadAndAnalyzeExcel,
@@ -42,6 +43,7 @@ agentRouter.get("/property/new-property", newProperty);
 agentRouter.get("/property/:id", getPropertyDetail);
 agentRouter.post("/send-sms", sendSMS);
 agentRouter.post("/sms/bulk", sendBulkSMS);
+agentRouter.post("/sms/schedule-sms",scheduleBulkSMS);
 agentRouter.get("/get-contacted-agents", getAllContactedAgent);
 
 agentRouter.post("/give-feedback", validate(givefeedbackSchema), givefeedback);
