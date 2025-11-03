@@ -1452,7 +1452,7 @@ export const agentAdd = async (req: Request, res: Response): Promise<any> => {
       countryCode = "+1",
     } = req.body;
 
-    const timeZone = req.headers.timeZone;
+    const timeZone = req.headers.timezone;
 
     console.log("timeZone",timeZone);
     console.log("headers",req.headers);
