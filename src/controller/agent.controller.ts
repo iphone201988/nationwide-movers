@@ -1015,6 +1015,7 @@ export const getPropertyDetail = async (
       countryCode: agent?.countryCode || null,
       brokerage: agent?.brokerage || null,
       image: agent?.image || null,
+      timeZone: agent?.timeZone || null,
     };
 
     res.status(200).json({
@@ -1454,9 +1455,9 @@ export const agentAdd = async (req: Request, res: Response): Promise<any> => {
 
     const timeZone = req.headers.timezone;
 
-    console.log("timeZone",timeZone);
-    console.log("headers",req.headers);
-    
+    console.log("timeZone", timeZone);
+    console.log("headers", req.headers);
+
 
     const agent: any = {};
 
