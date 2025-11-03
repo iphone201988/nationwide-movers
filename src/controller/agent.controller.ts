@@ -890,7 +890,7 @@ export const getAllProperty = async (
           countryCode: agent?.countryCode || null,
           brokerage: agent?.brokerage || null,
           image: agent?.image || null,
-          timeZone:agent?.timeZone
+          timeZone: agent?.timeZone
         };
       })
     );
@@ -1449,8 +1449,14 @@ export const agentAdd = async (req: Request, res: Response): Promise<any> => {
       raMailingAddress,
       referredBy,
       numberOfListings,
-      countryCode = "+1"
+      countryCode = "+1",
     } = req.body;
+
+    const timeZone = req.headers.timeZone;
+
+    console.log("timeZone",timeZone);
+    console.log("headers",req.headers);
+    
 
     const agent: any = {};
 
@@ -1543,6 +1549,9 @@ export const agentAdd = async (req: Request, res: Response): Promise<any> => {
     }
     if (countryCode) {
       agent.countryCode = countryCode;
+    }
+    if (timeZone) {
+      agent.timeZone = timeZone;
     }
 
     await Agent.create(agent);
