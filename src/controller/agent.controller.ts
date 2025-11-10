@@ -1153,14 +1153,27 @@ export const getAllContactedAgent = async (
     const limit = Number(req.query.limit) || 10;
     const page = Number(req.query.page) || 1;
     const skip = (page - 1) * limit;
+    const search = (req.query.search as string) || "";
 
+    // Build search filter
+    const searchFilter = search
+      ? {
+          $or: [
+            { "agentId.fullName": { $regex: search, $options: "i" } },
+            { "agentId.email": { $regex: search, $options: "i" } },
+            { "agentId.phoneNumber": { $regex: search, $options: "i" } },
+          ],
+        }
+      : {};
+
+    // Fetch contacted agents with populated agent data
     const [agents, total] = await Promise.all([
-      ContactedAgent.find()
+      ContactedAgent.find(searchFilter)
         .populate("agentId", "fullName email phoneNumber countryCode image isView timeZone smsAddress")
         .sort({ contactedAt: -1 })
         .skip(skip)
         .limit(limit),
-      ContactedAgent.countDocuments(),
+      ContactedAgent.countDocuments(searchFilter),
     ]);
 
     return res.status(200).json({
@@ -1178,6 +1191,7 @@ export const getAllContactedAgent = async (
     });
   }
 };
+
 
 export const givefeedback = async (
   req: Request,
