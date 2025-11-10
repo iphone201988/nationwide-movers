@@ -8,6 +8,7 @@ export interface IAgent extends Document {
   countryCode?: string;
   profileImage?: string;
   address?: string;
+  smsAddress?: string;
   link?: string;
   comment?: string;
 
@@ -49,6 +50,7 @@ const agentSchema = new Schema<IAgent>(
     countryCode: { type: String },
     profileImage: { type: String, default: null },
     address: { type: String, default: null },
+    smsAddress: { type: String, default: null },
     brokerage: { type: String, default: null },
     image: { type: String, default: null },
     feedback: {
@@ -149,7 +151,7 @@ const agentSchema = new Schema<IAgent>(
     isView: {
       type: Boolean,
       default: false
-    }
+    },
   },
   {
     timestamps: true,

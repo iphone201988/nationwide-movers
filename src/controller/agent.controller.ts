@@ -879,7 +879,7 @@ export const getAllProperty = async (
     const filteredListing = await Promise.all(
       listing.map(async (item) => {
         const agent = await Agent.findById(item.agentId).select(
-          "_id fullName countryCode phoneNumber address brokerage image isView timeZone"
+          "_id fullName countryCode phoneNumber address brokerage image isView timeZone smsAddress"
         );
 
         return {
@@ -890,7 +890,8 @@ export const getAllProperty = async (
           countryCode: agent?.countryCode || null,
           brokerage: agent?.brokerage || null,
           image: agent?.image || null,
-          timeZone: agent?.timeZone
+          timeZone: agent?.timeZone,
+          smsAddress: agent?.smsAddress
         };
       })
     );
@@ -903,6 +904,7 @@ export const getAllProperty = async (
       listing: filteredListing,
       page,
       totalPage: Math.ceil(totalListing / limit),
+      totalListing
     });
   } catch (error) {
     return res.status(500).json({
@@ -954,7 +956,7 @@ export const newProperty = async (
     const filteredNewProperty = await Promise.all(
       newListing.map(async (item) => {
         const agent = await Agent.findById(item.agentId).select(
-          "_id fullName countryCode phoneNumber address brokerage image isView timeZone"
+          "_id fullName countryCode phoneNumber address brokerage image isView timeZone smsAddress"
         );
         return {
           ...item.toObject(),
@@ -964,6 +966,7 @@ export const newProperty = async (
           countryCode: agent?.countryCode || null,
           brokerage: agent?.brokerage || null,
           image: agent?.image || null,
+          smsAddress: agent?.smsAddress || null,
         };
       })
     );
@@ -1002,7 +1005,7 @@ export const getPropertyDetail = async (
     await listing.save();
 
     const agent = await Agent.findById(listing.agentId)
-      .select("_id fullName countryCode phoneNumber address brokerage image isView timeZone")
+      .select("_id fullName countryCode phoneNumber address brokerage image isView timeZone smsAddress")
       .lean();
 
     console.log("agent", agent);
@@ -1016,6 +1019,7 @@ export const getPropertyDetail = async (
       brokerage: agent?.brokerage || null,
       image: agent?.image || null,
       timeZone: agent?.timeZone || null,
+      smsAddress: agent?.smsAddress || null,
     };
 
     res.status(200).json({
@@ -1152,7 +1156,7 @@ export const getAllContactedAgent = async (
 
     const [agents, total] = await Promise.all([
       ContactedAgent.find()
-        .populate("agentId", "fullName email phoneNumber countryCode image isView timeZone")
+        .populate("agentId", "fullName email phoneNumber countryCode image isView timeZone smsAddress")
         .sort({ contactedAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -1266,7 +1270,7 @@ export const getAllMeetings = async (
     const skip = (page - 1) * limit;
     const [meetings, total] = await Promise.all([
       Meeting.find()
-        .populate("agentId", "fullName email phoneNumber countryCode isView timeZone")
+        .populate("agentId", "fullName email phoneNumber countryCode isView timeZone smsAddress")
         .sort({ meetingDate: -1, meetingTime: -1 })
         .skip(skip)
         .limit(limit)
@@ -1316,7 +1320,8 @@ export const agentUpdate = async (
       raMailingAddress,
       referredBy,
       numberOfListings,
-      countryCode
+      countryCode,
+      smsAddress
     } = req.body;
 
     console.log("req.body:::", req.body);
@@ -1356,6 +1361,9 @@ export const agentUpdate = async (
     }
     if (address) {
       agent.address = address;
+    }
+    if (smsAddress) {
+      agent.smsAddress = smsAddress;
     }
     if (zillow) {
       agent.zillow = zillow;
