@@ -93,6 +93,9 @@ export const feedbackEnum = {
     "Wrong/No Phone #": 6,
     "Positive Response": 7,
     "CSV File": 8,
+    "Ready to be text": 9,
+    "Empty Listing": 10,
+    "Misc.": 11,
 } as const;
 
 export const givefeedbackSchema = {

@@ -1208,7 +1208,7 @@ export const givefeedback = async (
   res: Response
 ): Promise<any> => {
   try {
-    const { agentId, feedback } = req.body; // 1 = Positive Feedback, 2 = Neutral Feedback, 3 = Negative Feedback
+    const { agentId, feedback } = req.body; // 1 = Positive Feedback, 2 = Neutral Feedback, 3 = Negative Feedback, 
 
     const agent = await Agent.findById(agentId);
     if (!agent) {
