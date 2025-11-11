@@ -64,7 +64,10 @@ const agentSchema = new Schema<IAgent>(
         feedbackEnum["RA Joined"],
         feedbackEnum["Text failed"],
         feedbackEnum["Wrong/no phone #"],
-      ],
+        feedbackEnum["Ready to be text"],
+        feedbackEnum["Empty Listing"],
+        feedbackEnum["Misc."]
+      ]
     },
     link: {
       type: String,

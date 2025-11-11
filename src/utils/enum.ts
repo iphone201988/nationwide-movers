@@ -12,5 +12,8 @@ export const feedbackEnum = {
     "Other Response": 5,
     "Wrong/no phone #": 6,
     "Positive Response": 7,
-    "CSV file": 8
+    "CSV file": 8,
+    "Ready to be text": 9,
+    "Empty Listing": 10,
+    "Misc.": 11,
 }
