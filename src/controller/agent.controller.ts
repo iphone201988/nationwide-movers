@@ -866,7 +866,7 @@ export const getAllProperty = async (
       $or: [
         { agentId: { $exists: false } },
         { agentId: null },
-        { agentId: "" },
+        { agentId: { $type: "string" } },
       ],
     };
 
@@ -935,7 +935,7 @@ export const newProperty = async (
       $or: [
         { agentId: { $exists: false } },
         { agentId: null },
-        { agentId: "" },
+{ agentId: { $type: "string" } },
       ],
     };
 
