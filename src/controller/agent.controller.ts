@@ -851,6 +851,7 @@ export const getAgentDetails = async (
   }
 };
 
+
 export const getAllProperty = async (
   req: Request,
   res: Response
@@ -861,7 +862,13 @@ export const getAllProperty = async (
       : 10;
     const page = req.query.page ? parseInt(req.query.page.toString(), 10) : 1;
 
-    let qry: any = {};
+    let qry: any = {
+      $or: [
+        { agentId: { $exists: false } },
+        { agentId: null },
+        { agentId: "" },
+      ],
+    };
 
     if (req.query.search) {
       const search = req.query.search.toString();
@@ -924,7 +931,13 @@ export const newProperty = async (
   try {
     const today = moment().startOf("day");
 
-    let qry: any = {};
+    let qry: any = {
+      $or: [
+        { agentId: { $exists: false } },
+        { agentId: null },
+        { agentId: "" },
+      ],
+    };
 
     if (req.query.search) {
       const search = req.query.search.toString();
