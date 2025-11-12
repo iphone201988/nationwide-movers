@@ -1135,6 +1135,7 @@ export const sendBulkSMS = async (req: Request, res: Response) => {
         await new Promise((r) => setTimeout(r, delayInSeconds * 1000));
       }
     }
+    await ContactedAgent.create({ agentId });
 
     return res.json({ success: true, message: "Bulk SMS processing started" });
   } catch (err) {
@@ -1774,14 +1775,16 @@ export const emailAgents = async (
       emailCampaigns
     )) as any;
 
-    await Agent.findByIdAndUpdate(agentId, {
-      comment: `Email sent on ${new Date().toISOString()}: ${message.substring(
-        0,
-        50
-      )}...`,
-    });
+    // await Agent.findByIdAndUpdate(agentId, {
+    //   comment: `Email sent on ${new Date().toISOString()}: ${message.substring(
+    //     0,
+    //     50
+    //   )}...`,
+    // });
 
     console.log("response", response.body.messageId);
+
+    await ContactedAgent.create({ agentId });
 
     return res.status(200).json({
       success: true,
