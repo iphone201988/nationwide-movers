@@ -826,11 +826,14 @@ export const getAgentDetails = async (
       { $sample: { size: 10 } },
     ]);
 
-    const contactedAgent = await ContactedAgent.findOne({ agentId: agent._id });
+    const latestContactedAgent = await ContactedAgent.findOne({ agentId: agent._id })
+      .sort({ contactedAt: -1 });
+
     let contactedAt = null;
-    if (contactedAgent) {
-      contactedAt = contactedAgent.contactedAt;
+    if (latestContactedAgent) {
+      contactedAt = latestContactedAgent.contactedAt;
     }
+
 
     return res.status(200).json({
       success: true,
