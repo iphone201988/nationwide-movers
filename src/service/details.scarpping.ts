@@ -116,7 +116,7 @@ const saveScrapedData = async (scrapedData: any) => {
                     brokerage: agentInfo?.brokerage,
                     image: agentInfo?.image,
                     countryCode: "+1",
-                    isView:false,
+                    isView: false,
                 });
             } else {
                 // Update existing agent
@@ -124,7 +124,7 @@ const saveScrapedData = async (scrapedData: any) => {
                 agentDoc.brokerage = agentInfo.brokerage || agentDoc.brokerage;
                 agentDoc.image = agentInfo.image || agentDoc.image;
                 agentDoc.countryCode = "+1";
-                agentDoc.isView=false;
+                agentDoc.isView = false;
             }
 
             // Try to enrich agent with location info
@@ -231,6 +231,156 @@ export const loadLocalHtmlWithPuppeteer = async (localFilePath: string) => {
     }
 };
 
+// export const scrapePropertyData = async (htmlFilePath: string) => {
+//     const html = fs.readFileSync(htmlFilePath, "utf-8");
+//     const $ = cheerio.load(html);
+
+//     const result: any = {};
+
+//     // 🏠 Title
+//     result.title = $(".fw_900.textStyle_subHeader").first().text().trim();
+
+//     // 💲 Price
+//     result.price = $("[data-testid='on-market-price-details']").first().text().trim();
+
+//     // 📍 Address
+//     result.address = $("[data-testid='home-details-summary-city-state']").text().trim();
+
+//     // 🛏️ Beds
+//     result.beds = {
+//         value: $("[data-testid='bed'] div.mx_xxs").text().trim(),
+//         image: $("[data-testid='bed'] img").attr("src"),
+//     };
+
+//     // 🛁 Baths
+//     result.baths = {
+//         value: $("[data-testid='bath'] div.mx_xxs").text().trim(),
+//         image: $("[data-testid='bath'] img").attr("src"),
+//     };
+
+//     // 📐 Floor
+//     result.floor = {
+//         value: $("[data-testid='floor'] div.mx_xxs").text().trim(),
+//         image: $("[data-testid='floor'] img").attr("src"),
+//     };
+
+//     // 📝 Description
+//     result.description = $("[data-testid='home-description-text-description-text']").text().trim();
+
+//     // ✨ Home Highlights
+//     result.homeHighlights = [];
+//     $("[data-testid='home-highlights-container'] .cell").each((_, el) => {
+//         const key = $(el).find(".d_block").first().text().trim();
+//         const value = $(el).find(".fw_bold").first().text().trim();
+//         const image = $(el).find("img").attr("src");
+
+//         if (key && value) {
+//             result.homeHighlights.push({ key, value, image });
+//         }
+//     });
+
+//     // 🏗️ Features
+//     result.features = [];
+//     $("[data-testid='features-container'] table").each((_, table) => {
+//         const section = $(table).find("thead h3 div").text().trim();
+//         const icon = $(table).find("thead img").attr("src");
+
+//         const items: any[] = [];
+//         $(table).find("tbody tr").each((_, row) => {
+//             const label = $(row).find("[data-testid='structured-amenities-table-subcategory']").text().trim();
+//             const values = $(row)
+//                 .find("span, a")
+//                 .map((_, el2) => $(el2).text().trim())
+//                 .get()
+//                 .filter((v) => v.length > 0);
+
+//             if (label || values.length > 0) {
+//                 items.push({ label, values });
+//             }
+//         });
+
+//         if (section && items.length > 0) {
+//             result.features.push({ section, icon, items });
+//         }
+//     });
+
+//     // 🌍 Community description
+//     result.communityDescription = $("[data-testid='community-description-text-description-text']").text().trim();
+
+//     // 🏢 Office details
+//     result.officeDetails = {};
+//     const officeContainer = $("[data-testid='office-hours-container']");
+//     if (officeContainer.length > 0) {
+//         result.officeDetails.title = officeContainer.find("h3").text().trim();
+//         result.officeDetails.address = officeContainer
+//             .find(".cell div")
+//             .map((_, el) => $(el).text().trim())
+//             .get()
+//             .filter((v) => v.length > 0);
+//     }
+
+//     // 👨‍💼 Agents (supports all known variations)
+//     result.agents = [];
+
+//     // Case 1: agent-contact
+//     $("[data-testid='agent-contact']").each((_, el) => {
+//         const name = $(el).find("span[title]").first().attr("title") || "";
+//         const phone = $(el).find("ul li").last().text().trim() || "";
+//         if (name || phone) result.agents.push({ name, phone });
+//     });
+
+//     // Case 2: provider-info (standard)
+//     $("[data-testid='provider-info']").each((_, el) => {
+//         const name = $(el).find("[data-testid='no-form-agent-name']").text().trim();
+
+//         // Brokerage info (plain or link)
+//         const brokerageEl = $(el).find("[data-testid='broker-name']");
+//         const brokerage = brokerageEl.text().trim();
+//         const brokerageLink = brokerageEl.find("a").attr("href") || null;
+
+//         // Phone (handles agent-phone or broker-phone)
+//         const phone =
+//             $(el).find("[data-testid='agent-phone']").text().replace("Agent Phone:", "").trim() ||
+//             $(el).find("[data-testid='broker-phone']").text().replace(",", "").trim() ||
+//             $(el).find("[data-testid='owner-phone']").text().replace("Owner Phone:", "").trim();
+
+//         const image = $(el).find("img").attr("src");
+
+//         if (name || brokerage || phone) {
+//             result.agents.push({ name, brokerage, brokerageLink, phone, image });
+//         }
+//     });
+
+//     // Case 3: listing-provided-by (builder / community listings)
+//     $("[data-testid='listing-provided-by']").each((_, el) => {
+//         const brokerageEl = $(el).find("[data-testid='broker-name']");
+//         const brokerage = brokerageEl.text().trim();
+//         const brokerageLink = brokerageEl.find("a").attr("href") || null;
+
+//         const phone = $(el)
+//             .find("[data-testid='broker-phone']")
+//             .text()
+//             .replace(",", "")
+//             .trim();
+
+//         if (brokerage || phone) {
+//             result.agents.push({
+//                 name: "",
+//                 brokerage,
+//                 brokerageLink,
+//                 phone,
+//                 image: null,
+//             });
+//         }
+//     });
+
+
+
+
+//     return result;
+// };
+
+
 export const scrapePropertyData = async (htmlFilePath: string) => {
     const html = fs.readFileSync(htmlFilePath, "utf-8");
     const $ = cheerio.load(html);
@@ -249,19 +399,19 @@ export const scrapePropertyData = async (htmlFilePath: string) => {
     // 🛏️ Beds
     result.beds = {
         value: $("[data-testid='bed'] div.mx_xxs").text().trim(),
-        image: $("[data-testid='bed'] img").attr("src"),
+        image: $("[data-testid='bed'] img").attr("src") || null,
     };
 
     // 🛁 Baths
     result.baths = {
         value: $("[data-testid='bath'] div.mx_xxs").text().trim(),
-        image: $("[data-testid='bath'] img").attr("src"),
+        image: $("[data-testid='bath'] img").attr("src") || null,
     };
 
     // 📐 Floor
     result.floor = {
         value: $("[data-testid='floor'] div.mx_xxs").text().trim(),
-        image: $("[data-testid='floor'] img").attr("src"),
+        image: $("[data-testid='floor'] img").attr("src") || null,
     };
 
     // 📝 Description
@@ -272,20 +422,17 @@ export const scrapePropertyData = async (htmlFilePath: string) => {
     $("[data-testid='home-highlights-container'] .cell").each((_, el) => {
         const key = $(el).find(".d_block").first().text().trim();
         const value = $(el).find(".fw_bold").first().text().trim();
-        const image = $(el).find("img").attr("src");
-
-        if (key && value) {
-            result.homeHighlights.push({ key, value, image });
-        }
+        const image = $(el).find("img").attr("src") || null;
+        if (key && value) result.homeHighlights.push({ key, value, image });
     });
 
     // 🏗️ Features
     result.features = [];
     $("[data-testid='features-container'] table").each((_, table) => {
         const section = $(table).find("thead h3 div").text().trim();
-        const icon = $(table).find("thead img").attr("src");
-
+        const icon = $(table).find("thead img").attr("src") || null;
         const items: any[] = [];
+
         $(table).find("tbody tr").each((_, row) => {
             const label = $(row).find("[data-testid='structured-amenities-table-subcategory']").text().trim();
             const values = $(row)
@@ -294,14 +441,10 @@ export const scrapePropertyData = async (htmlFilePath: string) => {
                 .get()
                 .filter((v) => v.length > 0);
 
-            if (label || values.length > 0) {
-                items.push({ label, values });
-            }
+            if (label || values.length > 0) items.push({ label, values });
         });
 
-        if (section && items.length > 0) {
-            result.features.push({ section, icon, items });
-        }
+        if (section && items.length > 0) result.features.push({ section, icon, items });
     });
 
     // 🌍 Community description
@@ -319,7 +462,7 @@ export const scrapePropertyData = async (htmlFilePath: string) => {
             .filter((v) => v.length > 0);
     }
 
-    // 👨‍💼 Agents (supports all known variations)
+    // 👨‍💼 Agents (supports all known + new variations)
     result.agents = [];
 
     // Case 1: agent-contact
@@ -332,37 +475,26 @@ export const scrapePropertyData = async (htmlFilePath: string) => {
     // Case 2: provider-info (standard)
     $("[data-testid='provider-info']").each((_, el) => {
         const name = $(el).find("[data-testid='no-form-agent-name']").text().trim();
-
-        // Brokerage info (plain or link)
         const brokerageEl = $(el).find("[data-testid='broker-name']");
         const brokerage = brokerageEl.text().trim();
         const brokerageLink = brokerageEl.find("a").attr("href") || null;
-
-        // Phone (handles agent-phone or broker-phone)
         const phone =
             $(el).find("[data-testid='agent-phone']").text().replace("Agent Phone:", "").trim() ||
             $(el).find("[data-testid='broker-phone']").text().replace(",", "").trim() ||
             $(el).find("[data-testid='owner-phone']").text().replace("Owner Phone:", "").trim();
-
-        const image = $(el).find("img").attr("src");
+        const image = $(el).find("img").attr("src") || null;
 
         if (name || brokerage || phone) {
             result.agents.push({ name, brokerage, brokerageLink, phone, image });
         }
     });
 
-    // Case 3: listing-provided-by (builder / community listings)
+    // Case 3: listing-provided-by (builder/community)
     $("[data-testid='listing-provided-by']").each((_, el) => {
         const brokerageEl = $(el).find("[data-testid='broker-name']");
         const brokerage = brokerageEl.text().trim();
         const brokerageLink = brokerageEl.find("a").attr("href") || null;
-
-        const phone = $(el)
-            .find("[data-testid='broker-phone']")
-            .text()
-            .replace(",", "")
-            .trim();
-
+        const phone = $(el).find("[data-testid='broker-phone']").text().replace(",", "").trim();
         if (brokerage || phone) {
             result.agents.push({
                 name: "",
@@ -374,11 +506,85 @@ export const scrapePropertyData = async (htmlFilePath: string) => {
         }
     });
 
+    // 🆕 Case 4: MLS Attribution / "Source" Blocks
+    $("[data-testid='hdp-attribution-block-mls-source']").each((_, el) => {
+        const sourceText = $(el).text().replace("Source:", "").trim();
+        const logo = $(el)
+            .parent()
+            .find("[data-testid='hdp-attribution-block-mls-logo'] img")
+            .attr("src") || null;
 
+        // Get “Also Listed On” platforms
+        const alsoListedOn: any[] = [];
+        $(el)
+            .closest(".pb_xs")
+            .find(".d_block a")
+            .each((_, a) => {
+                const platform = $(a).text().replace(",", "").trim();
+                const link = $(a).attr("href");
+                alsoListedOn.push({ platform, link });
+            });
 
+        if (sourceText) {
+            result.agents.push({
+                name: null,
+                brokerage: sourceText,
+                brokerageLink: null,
+                phone: null,
+                image: logo,
+                alsoListedOn,
+            });
+        }
+    });
+
+    // 🆕 Case 5: MLS Attribution Summary / Courtesy Info (Name, Brokerage, Phone, Last Checked)
+    const attributionBlock = $("[data-testid='hdp-attribution-last-checked']").closest(".pt_m");
+    if (attributionBlock.length > 0) {
+        const lastChecked = attributionBlock
+            .find("[data-testid='hdp-attribution-last-checked']")
+            .text()
+            .replace("Last check for updates:", "")
+            .trim();
+
+        const summaries = attributionBlock
+            .find("[data-testid='hdp-attribution-summary']")
+            .map((_, el) => $(el).text().trim())
+            .get();
+
+        let name: string | null = null;
+        let brokerage: string | null = null;
+        let phone: string | null = null;
+
+        if (summaries.length > 0) {
+            const nameMatch = summaries.find((s) => s.toLowerCase().includes("listing courtesy of"));
+            if (nameMatch) {
+                name = nameMatch.replace(/listing courtesy of/i, "").trim();
+            }
+
+            const brokerLine = summaries.find((s) => /\d{3}[-)\s]\d{3}[-)\s]\d{4}/.test(s));
+            if (brokerLine) {
+                const parts = brokerLine.split(",");
+                brokerage = parts[0]?.trim() || null;
+                phone = parts.slice(1).join(",").trim() || null;
+            } else if (summaries.length > 1) {
+                brokerage = summaries[1].trim();
+            }
+        }
+
+        if (name || brokerage || phone || lastChecked) {
+            result.agents.push({
+                name,
+                brokerage,
+                phone,
+                lastChecked,
+            });
+        }
+    }
 
     return result;
 };
+
+
 
 async function autoScroll(page: any) {
     await page.evaluate(async () => {
