@@ -160,6 +160,12 @@ const agentSchema = new Schema<IAgent>(
     timestamps: true,
   }
 );
+agentSchema.index({createdAt: -1});
+agentSchema.index({ phoneNumber: 1 });
+agentSchema.index({ email: 1 });
+agentSchema.index({ fullName: 1 });
+
+
 
 export const Agent = mongoose.model<IAgent>("Agent", agentSchema);
 export default Agent;

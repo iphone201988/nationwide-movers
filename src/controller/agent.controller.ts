@@ -703,7 +703,10 @@ export const home = async (req: Request, res: Response): Promise<any> => {
       : undefined;
 
     // --- Build MongoDB query ---
-    const qry: any = {};
+    const qry: any = {
+       fullName: { $ne: "" } ,
+      
+    };
 
     // Feedback filter
     if (!isNaN(feedback!)) {
@@ -857,19 +860,25 @@ export const getAllProperty = async (
   res: Response
 ): Promise<any> => {
   try {
-    const limit = req.query.limit
-      ? parseInt(req.query.limit.toString(), 10)
-      : 10;
+   const limit = req.query.limit ? parseInt(req.query.limit.toString(), 10) : 10;
     const page = req.query.page ? parseInt(req.query.page.toString(), 10) : 1;
 
+    const skip = (page - 1) * limit;
+
+    // Base query for listings
+    // let qry: any = {
+    //   $or: [
+    //     { agentId: { $exists: false } },
+    //     { agentId: null },
+    //     { agentId: { $type: "string" } },
+    //   ],
+    // };
     let qry: any = {
-      $or: [
-        { agentId: { $exists: false } },
-        { agentId: null },
-        { agentId: { $type: "string" } },
-      ],
+      agentId: { $exists: true },
     };
 
+
+    // Search filters
     if (req.query.search) {
       const search = req.query.search.toString();
       qry.$or = [
@@ -881,37 +890,68 @@ export const getAllProperty = async (
       ];
     }
 
-    const listing = await Listing.find(qry)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit);
+    // Aggregation pipeline
+    const pipeline:any = [
+      { $match: qry },
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: "agents",
+          localField: "agentId",
+          foreignField: "_id",
+          as: "agent",
+           pipeline: [
+              {
+                $project: {
+                  _id: 1,
+                  fullName: 1,
+                  phoneNumber: 1,
+                  countryCode: 1,
+                  brokerage: 1,
+                  image: 1,
+                  isView: 1,
+                  timeZone: 1,
+                  smsAddress: 1,
+                },
+              },
+            ],
+        },
+      },
+      {
+        $unwind: {
+          path: "$agent",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $match: {
+          $and: [
+            { agent: { $exists: true } },
+            {
+              $or: [
+                { "agent.fullName": { $ne: null } },
+                { "agent.fullName": { $ne: "" } },
+                { "agent.fullName": { $exists: true } },
+              ],
+            },
+          ],
+        },
+      },
+      {$facet: {
+        metadata: [ { $count: "total" } ],
+        data: [ { $skip: skip }, { $limit: limit } ]
+      }}
+    ];
 
-    const filteredListing = await Promise.all(
-      listing.map(async (item) => {
-        const agent = await Agent.findById(item.agentId).select(
-          "_id fullName countryCode phoneNumber address brokerage image isView timeZone smsAddress"
-        );
-
-        return {
-          ...item.toObject(),
-          agentId: agent?._id || null,
-          fullName: agent?.fullName || null,
-          phoneNumber: agent?.phoneNumber || null,
-          countryCode: agent?.countryCode || null,
-          brokerage: agent?.brokerage || null,
-          image: agent?.image || null,
-          timeZone: agent?.timeZone,
-          smsAddress: agent?.smsAddress
-        };
-      })
-    );
-
-    const totalListing = await Listing.countDocuments(qry);
+    // Run aggregation
+    const result = await Listing.aggregate(pipeline);
+    const totalListing = result[0].metadata[0] ? result[0].metadata[0].total : 0;
+    const listings = result[0].data;
 
     res.status(200).json({
       success: true,
       message: "Properties fetched successfully",
-      listing: filteredListing,
+      listing: listings,
       page,
       totalPage: Math.ceil(totalListing / limit),
       totalListing
@@ -924,21 +964,94 @@ export const getAllProperty = async (
   }
 };
 
-export const newProperty = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+// export const newProperty = async (
+//   req: Request,
+//   res: Response
+// ): Promise<any> => {
+//   try {
+//     const today = moment().startOf("day");
+
+//     let qry: any = {
+//       $or: [
+//         { agentId: { $exists: false } },
+//         { agentId: null },
+// { agentId: { $type: "string" } },
+//       ],
+//     };
+
+//     if (req.query.search) {
+//       const search = req.query.search.toString();
+//       qry.$or = [
+//         { title: { $regex: search, $options: "i" } },
+//         { price: { $regex: search, $options: "i" } },
+//         { address: { $regex: search, $options: "i" } },
+//         { description: { $regex: search, $options: "i" } },
+//         { communityDescription: { $regex: search, $options: "i" } },
+//       ];
+//     }
+
+//     let newListing = await Listing.find({
+//       ...qry,
+//       createdAt: {
+//         $gte: today.toDate(),
+//         $lt: moment(today).endOf("day").toDate(),
+//       },
+//     })
+//       .sort({ createdAt: -1 })
+//       .limit(15);
+
+//     if (newListing.length === 0) {
+//       newListing = await Listing.find({
+//         ...qry
+//       })
+//         .sort({ createdAt: -1 })
+//         .limit(20);
+//     }
+
+
+//     const filteredNewProperty = await Promise.all(
+//       newListing.map(async (item) => {
+//         const agent = await Agent.findById(item.agentId).select(
+//           "_id fullName countryCode phoneNumber address brokerage image isView timeZone smsAddress"
+//         );
+//         return {
+//           ...item.toObject(),
+//           agentId: agent?._id || null,
+//           fullName: agent?.fullName || null,
+//           phoneNumber: agent?.phoneNumber || null,
+//           countryCode: agent?.countryCode || null,
+//           brokerage: agent?.brokerage || null,
+//           image: agent?.image || null,
+//           smsAddress: agent?.smsAddress || null,
+//         };
+//       })
+//     );
+
+//     res.status(200).json({
+//       success: true,
+//       message: "New Properties fetched successfully",
+//       newListing: filteredNewProperty,
+//     });
+//   } catch (error) {
+//     console.log(error);
+//     return res.status(500).json({
+//       success: false,
+//       message: error instanceof Error ? error.message : "Unknown error",
+//     });
+//   }
+// };
+
+
+export const newProperty = async (req: Request, res: Response): Promise<any> => {
   try {
     const today = moment().startOf("day");
 
+    // Base query
     let qry: any = {
-      $or: [
-        { agentId: { $exists: false } },
-        { agentId: null },
-{ agentId: { $type: "string" } },
-      ],
+      agentId: { $exists: true },
     };
 
+    // Apply search filters if any
     if (req.query.search) {
       const search = req.query.search.toString();
       qry.$or = [
@@ -950,56 +1063,134 @@ export const newProperty = async (
       ];
     }
 
-    let newListing = await Listing.find({
-      ...qry,
-      createdAt: {
-        $gte: today.toDate(),
-        $lt: moment(today).endOf("day").toDate(),
+    // Step 1: Try fetching today’s listings
+    const todayPipeline: any = [
+      {
+        $match: {
+          ...qry,
+          createdAt: {
+            $gte: today.toDate(),
+            $lt: moment(today).endOf("day").toDate(),
+          },
+        },
       },
-    })
-      .sort({ createdAt: -1 })
-      .limit(15);
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: "agents",
+          localField: "agentId",
+          foreignField: "_id",
+          as: "agent",
+           pipeline: [
+              {
+                $project: {
+                  _id: 1,
+                  fullName: 1,
+                  phoneNumber: 1,
+                  countryCode: 1,
+                  brokerage: 1,
+                  image: 1,
+                  isView: 1,
+                  timeZone: 1,
+                  smsAddress: 1,
+                },
+              },
+            ],
+        },
+      },
+      {
+        $unwind: {
+          path: "$agent",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $match: {
+          $and: [
+            { agent: { $exists: true } },
+            {
+              $or: [
+                { "agent.fullName": { $ne: null } },
+                { "agent.fullName": { $ne: "" } },
+                { "agent.fullName": { $exists: true } },
+              ],
+            },
+          ],
+        },
+      },
+      { $limit: 15 },
+    ];
 
+    let newListing = await Listing.aggregate(todayPipeline);
+
+    // Step 2: Fallback to latest listings if no new ones today
     if (newListing.length === 0) {
-      newListing = await Listing.find({
-        ...qry
-      })
-        .sort({ createdAt: -1 })
-        .limit(20);
+      const fallbackPipeline: any = [
+        { $match: qry },
+        { $sort: { createdAt: -1 } },
+        { $limit: 20 },
+        {
+          $lookup: {
+            from: "agents",
+            localField: "agentId",
+            foreignField: "_id",
+            as: "agent",
+            pipeline: [
+              {
+                $project: {
+                  _id: 1,
+                  fullName: 1,
+                  phoneNumber: 1,
+                  countryCode: 1,
+                  brokerage: 1,
+                  image: 1,
+                  isView: 1,
+                  timeZone: 1,
+                  smsAddress: 1,
+                },
+              },
+            ],
+          },
+        },
+        {
+          $unwind: {
+            path: "$agent",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+        $match: {
+          $and: [
+            { agent: { $exists: true } },
+            {
+              $or: [
+                { "agent.fullName": { $ne: null } },
+                { "agent.fullName": { $ne: "" } },
+                { "agent.fullName": { $exists: true } },
+              ],
+            },
+          ],
+        },
+      },
+      ];
+
+      newListing = await Listing.aggregate(fallbackPipeline);
     }
-
-
-    const filteredNewProperty = await Promise.all(
-      newListing.map(async (item) => {
-        const agent = await Agent.findById(item.agentId).select(
-          "_id fullName countryCode phoneNumber address brokerage image isView timeZone smsAddress"
-        );
-        return {
-          ...item.toObject(),
-          agentId: agent?._id || null,
-          fullName: agent?.fullName || null,
-          phoneNumber: agent?.phoneNumber || null,
-          countryCode: agent?.countryCode || null,
-          brokerage: agent?.brokerage || null,
-          image: agent?.image || null,
-          smsAddress: agent?.smsAddress || null,
-        };
-      })
-    );
 
     res.status(200).json({
       success: true,
       message: "New Properties fetched successfully",
-      newListing: filteredNewProperty,
+      newListing,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };
+
 
 export const getPropertyDetail = async (
   req: Request,

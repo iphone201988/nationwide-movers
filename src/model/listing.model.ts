@@ -106,6 +106,10 @@ const listingSchema = new Schema<IListing>(
         timestamps: true,
     }
 );
+listingSchema.index({ createdAt: -1 });
+listingSchema.index({ address: 1 });
+listingSchema.index({ price: 1 });
+listingSchema.index({ title: 1 });
 
 export const Listing = mongoose.model<IListing>("Listing", listingSchema);
 export default Listing;
