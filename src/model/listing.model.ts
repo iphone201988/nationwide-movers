@@ -40,6 +40,7 @@ export interface IListing extends Document {
     createdAt: Date;
     updatedAt: Date;
     isView: boolean;
+    offMarket: boolean;
 }
 
 const listingSchema = new Schema<IListing>(
@@ -100,6 +101,10 @@ const listingSchema = new Schema<IListing>(
         isView: {
             type: Boolean,
             default: false
+        },
+        offMarket: {
+            type: Boolean,
+            default: false
         }
     },
     {
@@ -110,6 +115,9 @@ listingSchema.index({ createdAt: -1 });
 listingSchema.index({ address: 1 });
 listingSchema.index({ price: 1 });
 listingSchema.index({ title: 1 });
+listingSchema.index({ agentId: 1 });
+listingSchema.index({ title: "text", price: "text", address: "text", description: "text", communityDescription: "text" });
+
 
 export const Listing = mongoose.model<IListing>("Listing", listingSchema);
 export default Listing;

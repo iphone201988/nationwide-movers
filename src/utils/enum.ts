@@ -16,4 +16,6 @@ export const feedbackEnum = {
     "Ready to be text": 9,
     "Empty Listing": 10,
     "Misc.": 11,
+    "Already Texted": 14,
+    "Pending": 15,
 }

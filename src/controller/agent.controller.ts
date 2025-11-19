@@ -18,6 +18,8 @@ import { createStaticEmailTemplate } from "../utils/html.template";
 import "dotenv/config";
 import { getFiles } from "../utils/helper";
 import { ScheduleSms } from "../model/scheduleSms.model";
+import { off } from "process";
+import mongoose from "mongoose";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -704,13 +706,22 @@ export const home = async (req: Request, res: Response): Promise<any> => {
 
     // --- Build MongoDB query ---
     const qry: any = {
-       fullName: { $ne: "" } ,
-      
+      fullName: { $ne: "" },
+
     };
 
     // Feedback filter
     if (!isNaN(feedback!)) {
-      qry.feedback = feedback;
+      if (feedback <= 200) {
+        qry.feedback = feedback;
+      } else if (feedback <= 500) {
+        qry.listingInfo = feedback;
+      } else if (feedback <= 800) {
+        qry.additionalInfo = feedback;
+      } else {
+        qry.feedback = feedback;
+
+      }
     }
 
     // Search filter
@@ -724,22 +735,84 @@ export const home = async (req: Request, res: Response): Promise<any> => {
 
     // Only apply today's date filter if `all` is NOT true
     if (!all && feedback === undefined) {
-      // const today = moment().startOf("day");
-      // qry.createdAt = {
-      // $gte: today.toDate(),
-      // $lt: moment(today).endOf("day").toDate(),
-      // };
+      console.log("Applying  form today to 3 month's date filter");
+      const threeMonthsAgo = moment().subtract(2, "months").startOf("day");
+      qry.createdAt = {
+        $gte: threeMonthsAgo.toDate(),
+        $lt: moment().endOf("day").toDate(),
+      };
     }
 
     console.log("Query being executed:", qry);
 
     // --- Fetch from DB ---
-    const agents = await Agent.find(qry)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit);
+    // const agents = await Agent.find(qry)
+    //   .sort({ createdAt: -1 })
+    //   .skip((page - 1) * limit)
+    //   .limit(limit);
+    //   const totalAgents = await Agent.countDocuments(qry);
+      const results= await Agent.aggregate([
+        { $match: qry },
+        {
+          $facet: {
+            agents: [
+              { $sort: { createdAt: -1 } },
+              { $skip: (page - 1) * limit },
+              { $limit: limit },
+              {
+                $lookup: {
+                  from: "contactedagents",
+                  localField: "_id",
+                  foreignField: "agentId",
+                  as: "contactedInfo",
+                  pipeline: [
+                    { $sort: { contactedAt: -1 } },
+                    { $limit: 1 },
+                  ],
+                },
+              },
+              {
+                $unwind:{
+                  path:"$contactedInfo",
+                  preserveNullAndEmptyArrays:true
+                }
+              },
+              { $addFields: {
+                  contactedAt: "$contactedInfo.contactedAt",
+                },  
+              },
+            ],
+            totalCount: [
+              { $count: "count" }
+            ]
+          }
+        }
+      ]);
+      const agents = results[0].agents || [];
+      const totalAgents = results[0].totalCount[0] ? results[0].totalCount[0].count : 0;
 
-    const totalAgents = await Agent.countDocuments(qry);
+    const [newTotal, /* allToday,  */feedback1, /* feedback2, feedback3, feedback4, feedback5, feedback6, feedback7, feedback8, feedback9, feedback10, feedback11, feedback14, feedback15 */] = await Promise.all([
+      Agent.countDocuments({
+        fullName: { $ne: "" }, createdAt: {
+          $gte: moment().subtract(2, "months").startOf("day").toDate(),
+          $lt: moment().endOf("day").toDate(),
+        }
+      }),
+      /* Agent.countDocuments({ fullName: { $ne: "" } }), */
+      Agent.countDocuments({ fullName: { $ne: "" }, feedback: 1 }),
+      /* Agent.countDocuments({ fullName: { $ne: "" }, feedback: 2 }),
+      Agent.countDocuments({ fullName: { $ne: "" }, feedback: 3 }),
+      Agent.countDocuments({ fullName: { $ne: "" }, feedback: 4 }),
+      Agent.countDocuments({ fullName: { $ne: "" }, feedback: 5 }),
+      Agent.countDocuments({ fullName: { $ne: "" }, feedback: 6 }),
+      Agent.countDocuments({ fullName: { $ne: "" }, feedback: 7 }),
+      Agent.countDocuments({ fullName: { $ne: "" }, feedback: 8 }),
+      Agent.countDocuments({ fullName: { $ne: "" }, feedback: 9 }),
+      Agent.countDocuments({ fullName: { $ne: "" }, feedback: 10 }),
+      Agent.countDocuments({ fullName: { $ne: "" }, feedback: 11 }),
+      Agent.countDocuments({ fullName: { $ne: "" }, feedback: 14 }),
+      Agent.countDocuments({ fullName: { $ne: "" }, feedback: 15 }), */
+    ]);
 
     res.status(200).json({
       success: true,
@@ -748,6 +821,23 @@ export const home = async (req: Request, res: Response): Promise<any> => {
       total: totalAgents,
       page,
       pages: Math.ceil(totalAgents / limit),
+      stats: {
+        newTotal,
+        // allToday,
+        feedback1,
+        /* feedback2,
+        feedback3,
+        feedback4,
+        feedback5,
+        feedback6,
+        feedback7,
+        feedback8,
+        feedback9,
+        feedback10,
+        feedback11,
+        feedback14,
+        feedback15, */
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -823,10 +913,12 @@ export const getAgentDetails = async (
     agent.isView = true;
     await agent.save();
 
-
-    const listings = await Listing.aggregate([
-      { $match: { agentId: agent._id } },
-      { $sample: { size: 10 } },
+    const[ listings, totalListingCount ]= await Promise.all([
+      Listing.aggregate([
+        { $match: { agentId: agent._id } },
+        { $sample: { size: 20 } },
+      ]),
+      Listing.countDocuments({ agentId: agent._id })
     ]);
 
     const latestContactedAgent = await ContactedAgent.findOne({ agentId: agent._id })
@@ -844,6 +936,7 @@ export const getAgentDetails = async (
         ...agent.toObject(),
         contactedAt,
         listings,
+        totalListingCount
       },
     });
   } catch (error) {
@@ -860,7 +953,7 @@ export const getAllProperty = async (
   res: Response
 ): Promise<any> => {
   try {
-   const limit = req.query.limit ? parseInt(req.query.limit.toString(), 10) : 10;
+    const limit = req.query.limit ? parseInt(req.query.limit.toString(), 10) : 10;
     const page = req.query.page ? parseInt(req.query.page.toString(), 10) : 1;
 
     const skip = (page - 1) * limit;
@@ -880,7 +973,7 @@ export const getAllProperty = async (
 
     // Search filters
     if (req.query.search) {
-      const search = req.query.search.toString();
+      const search = `^${req.query.search.toString()}`;
       qry.$or = [
         { title: { $regex: search, $options: "i" } },
         { price: { $regex: search, $options: "i" } },
@@ -891,7 +984,7 @@ export const getAllProperty = async (
     }
 
     // Aggregation pipeline
-    const pipeline:any = [
+    const pipeline: any = [
       { $match: qry },
       { $sort: { createdAt: -1 } },
       {
@@ -900,21 +993,21 @@ export const getAllProperty = async (
           localField: "agentId",
           foreignField: "_id",
           as: "agent",
-           pipeline: [
-              {
-                $project: {
-                  _id: 1,
-                  fullName: 1,
-                  phoneNumber: 1,
-                  countryCode: 1,
-                  brokerage: 1,
-                  image: 1,
-                  isView: 1,
-                  timeZone: 1,
-                  smsAddress: 1,
-                },
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                fullName: 1,
+                phoneNumber: 1,
+                countryCode: 1,
+                brokerage: 1,
+                image: 1,
+                isView: 1,
+                timeZone: 1,
+                smsAddress: 1,
               },
-            ],
+            },
+          ],
         },
       },
       {
@@ -937,10 +1030,12 @@ export const getAllProperty = async (
           ],
         },
       },
-      {$facet: {
-        metadata: [ { $count: "total" } ],
-        data: [ { $skip: skip }, { $limit: limit } ]
-      }}
+      {
+        $facet: {
+          metadata: [{ $count: "total" }],
+          data: [{ $skip: skip }, { $limit: limit }]
+        }
+      }
     ];
 
     // Run aggregation
@@ -1053,7 +1148,7 @@ export const newProperty = async (req: Request, res: Response): Promise<any> => 
 
     // Apply search filters if any
     if (req.query.search) {
-      const search = req.query.search.toString();
+      const search = `^${req.query.search.toString()}`;
       qry.$or = [
         { title: { $regex: search, $options: "i" } },
         { price: { $regex: search, $options: "i" } },
@@ -1081,21 +1176,21 @@ export const newProperty = async (req: Request, res: Response): Promise<any> => 
           localField: "agentId",
           foreignField: "_id",
           as: "agent",
-           pipeline: [
-              {
-                $project: {
-                  _id: 1,
-                  fullName: 1,
-                  phoneNumber: 1,
-                  countryCode: 1,
-                  brokerage: 1,
-                  image: 1,
-                  isView: 1,
-                  timeZone: 1,
-                  smsAddress: 1,
-                },
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                fullName: 1,
+                phoneNumber: 1,
+                countryCode: 1,
+                brokerage: 1,
+                image: 1,
+                isView: 1,
+                timeZone: 1,
+                smsAddress: 1,
               },
-            ],
+            },
+          ],
         },
       },
       {
@@ -1159,19 +1254,19 @@ export const newProperty = async (req: Request, res: Response): Promise<any> => 
           },
         },
         {
-        $match: {
-          $and: [
-            { agent: { $exists: true } },
-            {
-              $or: [
-                { "agent.fullName": { $ne: null } },
-                { "agent.fullName": { $ne: "" } },
-                { "agent.fullName": { $exists: true } },
-              ],
-            },
-          ],
+          $match: {
+            $and: [
+              { agent: { $exists: true } },
+              {
+                $or: [
+                  { "agent.fullName": { $ne: null } },
+                  { "agent.fullName": { $ne: "" } },
+                  { "agent.fullName": { $exists: true } },
+                ],
+              },
+            ],
+          },
         },
-      },
       ];
 
       newListing = await Listing.aggregate(fallbackPipeline);
@@ -1235,6 +1330,59 @@ export const getPropertyDetail = async (
       listing: responseData,
     });
   } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+export const getAllAgentById = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const limit = req.query.limit ? parseInt(req.query.limit.toString(), 10) : 10;
+    const page = req.query.page ? parseInt(req.query.page.toString(), 10) : 1;
+    const agentId = req.query.agentId as string; 
+
+    const skip = (page - 1) * limit;
+    let qry: any = {
+      agentId: new mongoose.Types.ObjectId( agentId ),
+    };
+
+
+    // Search filters
+    if (req.query.search) {
+      const search = `^${req.query.search.toString()}`;
+      qry.$or = [
+        { title: { $regex: search, $options: "i" } },
+      ];
+    }
+// console.log("qry", qry);
+    // Aggregation pipeline
+    const pipeline: any = [
+      { $match: qry },
+      { $sort: { createdAt: -1 } },
+      {
+        $facet: {
+          metadata: [{ $count: "total" }],
+          data: [{ $skip: skip }, { $limit: limit }]
+        }
+      }
+    ];
+
+    // Run aggregation
+    const result = await Listing.aggregate(pipeline);
+    const totalListing = result[0].metadata[0] ? result[0].metadata[0].total : 0;
+    const listings = result[0].data;
+
+    res.status(200).json({
+      success: true,
+      message: "Properties fetched successfully",
+      listing: listings,
+      page,
+      totalPage: Math.ceil(totalListing / limit),
+      totalListing
+    });
+  } catch (error) {
+    console.log(error);
     return res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : "Unknown error",
@@ -1410,14 +1558,55 @@ export const getAllContactedAgent = async (req: Request, res: Response): Promise
     });
   }
 };
+export const getAllContactedAgentById = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const limit = Number(req.query.limit) || 10;
+    const page = Number(req.query.page) || 1;
+    const agentId = req.query.agentId as string;
+    const skip = (page - 1) * limit;
+
+    // Build populate match filter for search
+    const populateOptions: any = {
+      path: "agentId",
+      select: "fullName email phoneNumber countryCode image isView timeZone smsAddress",
+    };
+
+
+
+    // Step 1: Fetch contacted agents
+    const agents = await ContactedAgent.find({agentId})
+      .populate('agentId','fullName email phoneNumber countryCode image isView timeZone smsAddress')
+      .sort({ contactedAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(); // 🚀 faster read-only query
+
+    // Step 3: Get total count efficiently
+    const total = await ContactedAgent.countDocuments({agentId});
+
+    return res.status(200).json({
+      success: true,
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+      data: agents,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Internal server error",
+    });
+  }
+};
 
 export const givefeedback = async (
   req: Request,
   res: Response
 ): Promise<any> => {
   try {
-    const { agentId, feedback } = req.body; // 1 = Positive Feedback, 2 = Neutral Feedback, 3 = Negative Feedback, 
-
+    const { agentId, feedback, listingInfo, additionalInfo } = req.body; // 1 = Positive Feedback, 2 = Neutral Feedback, 3 = Negative Feedback, 
+console.log("req.body", req.body);
     const agent = await Agent.findById(agentId);
     if (!agent) {
       return res.status(404).json({
@@ -1425,7 +1614,15 @@ export const givefeedback = async (
         message: "Agent not found",
       });
     }
-    agent.feedback = feedback;
+    if (listingInfo) {
+      agent.listingInfo = listingInfo;
+    }
+    if (additionalInfo) {
+      agent.additionalInfo = additionalInfo;
+    }
+    if (feedback) {
+      agent.feedback = feedback;
+    }
     await agent.save();
     return res.status(200).json({
       success: true,
@@ -1433,6 +1630,7 @@ export const givefeedback = async (
       agent,
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : "Unknown error",
@@ -1553,7 +1751,9 @@ export const agentUpdate = async (
       referredBy,
       numberOfListings,
       countryCode,
-      smsAddress
+      smsAddress,
+      homeowner,
+
     } = req.body;
 
     console.log("req.body:::", req.body);
@@ -1649,6 +1849,7 @@ export const agentUpdate = async (
     if (countryCode) {
       agent.countryCode = countryCode;
     }
+    agent.homeowner = homeowner ?? agent.homeowner;
 
 
     await agent.save();
@@ -1691,6 +1892,9 @@ export const agentAdd = async (req: Request, res: Response): Promise<any> => {
       referredBy,
       numberOfListings,
       countryCode = "+1",
+      homeowner,
+      listingInfo,
+      additionalInfo,
     } = req.body;
 
     const timeZone = req.headers.timezone;
@@ -1794,6 +1998,9 @@ export const agentAdd = async (req: Request, res: Response): Promise<any> => {
     if (timeZone) {
       agent.timeZone = timeZone;
     }
+    agent.homeowner = homeowner;
+    agent.listingInfo = Number(listingInfo) || 1;
+    agent.additionalInfo = Number(additionalInfo) || 1;
 
     await Agent.create(agent);
 
@@ -2105,10 +2312,58 @@ export const scheduleBulkSMS = async (req: Request, res: Response) => {
     });
   }
 };
+export const updateListing = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { listingId, offMarket } = req.body;
+    const listing = await Listing.findById(listingId);
+    if (!listing) {
+      return res.status(404).json({
+        success: false,
 
+        message: "Listing not found",
+      });
+    }
+    listing.offMarket = offMarket ?? listing.offMarket;
+    await listing.save();
+    return res.status(200).json({
+      success: true,
+      message: "Listing status updated successfully",
+      listing,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+export const deleteListing = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { listingId } = req.params;
+    const listing = await Listing.findByIdAndDelete(listingId);
+    if (!listing) {
+      return res.status(404).json({
+        success: false,
+        message: "Listing not found",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Listing deleted successfully",
+    });
+  }
+  catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : "Unknown error",
+
+    });
+  }
+};
 export const agentController = {
   readExcelFile,
   readExcelSheet,
   getExcelInfo,
   uploadAndAnalyzeExcel,
+
 };

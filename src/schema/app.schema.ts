@@ -96,25 +96,34 @@ export const feedbackEnum = {
     "Ready to be text": 9,
     "Empty Listing": 10,
     "Misc.": 11,
+    "Already Texted": 14,
+    "Pending": 15,
 } as const;
 
 export const givefeedbackSchema = {
     body: Joi.object({
+        agentId: Joi.string()
+        .trim()
+        .required()
+        .messages({
+            "string.empty": "Agent ID cannot be empty",
+            "any.required": "Agent ID is required",
+        }),
         feedback: Joi.number()
             .valid(...Object.values(feedbackEnum))
-            .required()
+            .optional()
             .messages({
                 "any.only": `Feedback must be one of: ${Object.values(feedbackEnum).join(", ")}`,
-                "any.required": "Feedback is required",
                 "number.base": "Feedback must be a number",
             }),
-        agentId: Joi.string()
-            .trim()
-            .required()
+        listingInfo: Joi.number()
+            .optional()
             .messages({
-                "string.empty": "Agent ID cannot be empty",
-                "any.required": "Agent ID is required",
+                "number.base": "Listing Info must be a number",
             }),
+        additionalInfo: Joi.number().optional().messages({
+            "number.base": "Additional Info must be a number",
+        }),
     }),
 };
 
@@ -156,4 +165,16 @@ export const getMeetingSchema = {
             "any.required": "Page is required",
         }),
     }),
-}
+};
+export const updateListingSchema = {
+    body: Joi.object({
+        listingId: Joi.string().required().messages({
+            "string.empty": "Listing ID cannot be empty",
+            "any.required": "Listing ID is required",
+        }),
+        offMarket: Joi.boolean().optional().messages({
+            "boolean.base": "offMarket must be a boolean",
+        }),
+    }),
+};
+

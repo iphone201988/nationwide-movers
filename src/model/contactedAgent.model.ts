@@ -15,6 +15,8 @@ const contactedAgentSchema = new Schema(
     timestamps: true,
   }
 );
+contactedAgentSchema.index({ agentId: 1 });
+contactedAgentSchema.index({ contactedAt: -1 });
 
 const ContactedAgent = mongoose.model("ContactedAgent", contactedAgentSchema);
 

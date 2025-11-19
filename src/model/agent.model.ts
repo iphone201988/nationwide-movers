@@ -40,6 +40,9 @@ export interface IAgent extends Document {
   raMailingAddress: string;
   referredBy: string;
   isView?: boolean;
+  homeowner: string;
+  listingInfo?: number;
+  additionalInfo?: number;
 }
 
 const agentSchema = new Schema<IAgent>(
@@ -66,8 +69,16 @@ const agentSchema = new Schema<IAgent>(
         feedbackEnum["Wrong/no phone #"],
         feedbackEnum["Ready to be text"],
         feedbackEnum["Empty Listing"],
-        feedbackEnum["Misc."]
+        feedbackEnum["Misc."],
+        feedbackEnum["Already Texted"],
+        feedbackEnum["Pending"],
       ]
+    },
+    listingInfo: {
+      type: Number,
+    },
+    additionalInfo: {
+      type: Number,
     },
     link: {
       type: String,
@@ -155,6 +166,9 @@ const agentSchema = new Schema<IAgent>(
       type: Boolean,
       default: false
     },
+    homeowner:{
+      type: String,
+    }
   },
   {
     timestamps: true,

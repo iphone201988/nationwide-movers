@@ -3,9 +3,12 @@ import {
   addMeeting,
   agentAdd,
   agentUpdate,
+  deleteListing,
   emailAgents,
   getAgentDetails,
+  getAllAgentById,
   getAllContactedAgent,
+  getAllContactedAgentById,
   getAllMeetings,
   getAllProperty,
   getPropertyDetail,
@@ -17,6 +20,7 @@ import {
   scheduleBulkSMS,
   sendBulkSMS,
   sendSMS,
+  updateListing,
   uploadAndAnalyzeExcel,
 } from "../controller/agent.controller";
 import { validate } from "../middlewares/validate.middlewares";
@@ -24,6 +28,7 @@ import {
   addMeetingSchema,
   getMeetingSchema,
   givefeedbackSchema,
+  updateListingSchema,
   updateMeetingSchema,
 } from "../schema/app.schema";
 import upload from "../middlewares/multer.middleware";
@@ -39,6 +44,7 @@ agentRouter.get("/agent-detail/:id", getAgentDetails);
 
 agentRouter.get("/property/all", getAllProperty);
 agentRouter.get("/property/new-property", newProperty);
+agentRouter.get("/property/agent", getAllAgentById);
 
 agentRouter.get("/property/:id", getPropertyDetail);
 agentRouter.post("/send-sms", sendSMS);
@@ -109,5 +115,8 @@ agentRouter.post(
   agentAdd
 );
 agentRouter.post("/agent/email", emailAgents);
+agentRouter.put('/listingUpdate', validate(updateListingSchema), updateListing);
+agentRouter.delete('/listingDelete/:listingId', deleteListing);
+agentRouter.get('/getAllContactedAgentById', getAllContactedAgentById);
 
 export default agentRouter;
