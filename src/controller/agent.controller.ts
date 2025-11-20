@@ -1313,7 +1313,7 @@ export const getPropertyDetail = async (
     await listing.save();
 
     const agent = await Agent.findById(listing.agentId)
-      .select("_id fullName countryCode phoneNumber address brokerage image isView timeZone smsAddress profileImage email")
+      .select("_id fullName countryCode phoneNumber address brokerage image isView timeZone smsAddress profileImage email webLink feedback listingInfo additionalInfo")
       .lean();
 
     console.log("agent", agent);
@@ -1368,7 +1368,7 @@ export const getAllAgentById = async (req: Request, res: Response): Promise<any>
     const pipeline: any = [
       { $match: qry },
       { $sort: { createdAt: -1 } },
-      
+
       {
         $facet: {
           metadata: [{ $count: "total" }],
