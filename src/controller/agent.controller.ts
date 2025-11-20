@@ -1330,6 +1330,10 @@ export const getPropertyDetail = async (
       smsAddress: agent?.smsAddress || null,
       profileImage: agent?.profileImage || null,
       email: agent?.email || null,
+      webLink: agent?.webLink || null,
+      feedback: agent?.feedback || null,
+      listingInfo: agent?.listingInfo || null,
+      additionalInfo: agent?.additionalInfo || null,
     };
 
     res.status(200).json({
