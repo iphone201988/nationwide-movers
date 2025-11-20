@@ -998,10 +998,12 @@ export const getAllProperty = async (
               $project: {
                 _id: 1,
                 fullName: 1,
+                email: 1,
                 phoneNumber: 1,
                 countryCode: 1,
                 brokerage: 1,
                 image: 1,
+                profileImage: 1,
                 isView: 1,
                 timeZone: 1,
                 smsAddress: 1,
@@ -1181,10 +1183,12 @@ export const newProperty = async (req: Request, res: Response): Promise<any> => 
               $project: {
                 _id: 1,
                 fullName: 1,
+                email: 1,
                 phoneNumber: 1,
                 countryCode: 1,
                 brokerage: 1,
                 image: 1,
+                profileImage: 1,
                 isView: 1,
                 timeZone: 1,
                 smsAddress: 1,
@@ -1235,10 +1239,12 @@ export const newProperty = async (req: Request, res: Response): Promise<any> => 
                 $project: {
                   _id: 1,
                   fullName: 1,
+                  email: 1,
                   phoneNumber: 1,
                   countryCode: 1,
                   brokerage: 1,
                   image: 1,
+                  profileImage: 1,
                   isView: 1,
                   timeZone: 1,
                   smsAddress: 1,
@@ -1307,7 +1313,7 @@ export const getPropertyDetail = async (
     await listing.save();
 
     const agent = await Agent.findById(listing.agentId)
-      .select("_id fullName countryCode phoneNumber address brokerage image isView timeZone smsAddress")
+      .select("_id fullName countryCode phoneNumber address brokerage image isView timeZone smsAddress profileImage email")
       .lean();
 
     console.log("agent", agent);
@@ -1322,6 +1328,8 @@ export const getPropertyDetail = async (
       image: agent?.image || null,
       timeZone: agent?.timeZone || null,
       smsAddress: agent?.smsAddress || null,
+      profileImage: agent?.profileImage || null,
+      email: agent?.email || null,
     };
 
     res.status(200).json({
@@ -1360,6 +1368,7 @@ export const getAllAgentById = async (req: Request, res: Response): Promise<any>
     const pipeline: any = [
       { $match: qry },
       { $sort: { createdAt: -1 } },
+      
       {
         $facet: {
           metadata: [{ $count: "total" }],
@@ -1845,6 +1854,7 @@ export const agentUpdate = async (
     }
     if (files?.profileImage && files?.profileImage?.length) {
       agent.profileImage = files?.profileImage[0];
+      agent.image = files?.profileImage[0];
     }
     if (countryCode) {
       agent.countryCode = countryCode;
@@ -1991,6 +2001,7 @@ export const agentAdd = async (req: Request, res: Response): Promise<any> => {
     }
     if (files?.profileImage && files?.profileImage.length) {
       agent.profileImage = files?.profileImage[0];
+      agent.image = files?.profileImage[0];
     }
     if (countryCode) {
       agent.countryCode = countryCode;
