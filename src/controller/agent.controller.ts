@@ -1324,6 +1324,7 @@ export const getPropertyDetail = async (
       fullName: agent?.fullName || null,
       phoneNumber: agent?.phoneNumber || null,
       countryCode: agent?.countryCode || null,
+      agentAddress: agent?.address || null,
       brokerage: agent?.brokerage || null,
       image: agent?.image || null,
       timeZone: agent?.timeZone || null,
