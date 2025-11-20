@@ -1525,7 +1525,7 @@ export const getAllContactedAgent = async (req: Request, res: Response): Promise
     // Build populate match filter for search
     const populateOptions: any = {
       path: "agentId",
-      select: "fullName email phoneNumber countryCode image isView timeZone smsAddress",
+      select: "fullName email phoneNumber countryCode image profileImage isView timeZone smsAddress",
     };
 
     if (search) {
