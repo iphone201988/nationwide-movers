@@ -1313,7 +1313,7 @@ export const getPropertyDetail = async (
     await listing.save();
 
     const agent = await Agent.findById(listing.agentId)
-      .select("_id fullName countryCode phoneNumber address brokerage image isView timeZone smsAddress profileImage email webLink feedback listingInfo additionalInfo")
+      .select("_id fullName countryCode phoneNumber address brokerage image isView timeZone smsAddress profileImage email webLink feedback listingInfo additionalInfo link")
       .lean();
 
     console.log("agent", agent);
@@ -1335,6 +1335,7 @@ export const getPropertyDetail = async (
       feedback: agent?.feedback || null,
       listingInfo: agent?.listingInfo || null,
       additionalInfo: agent?.additionalInfo || null,
+      link: agent?.link || null,
     };
 
     res.status(200).json({
