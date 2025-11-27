@@ -1,21 +1,7 @@
-// index.ts
-import fs from "fs";
-import path from "path";
+import * as path from "path";
+import * as fs from "fs";
 import { google, gmail_v1 } from "googleapis";
-import express, { Request, Response } from "express";
-import bodyParser from "body-parser";
-import morgan from "morgan";
-import * as cheerio from "cheerio";
-import { fileURLToPath } from "url";
-
-const __filename = path.resolve();
-const __dirname = path.dirname(__filename);
-
-const app = express();
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(morgan("dev"));
-
+import cheerio from "cheerio";
 // ----------------------------------------------------
 // Paths
 // ----------------------------------------------------
@@ -174,5 +160,9 @@ export class GmailMessageService {
   }
 }
 
-
+export default {
+  oAuth2Client,
+  TOKEN_PATH,
+  GmailMessageService,
+}
 

@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { GmailMessageService, oAuth2Client, TOKEN_PATH } from "../../listingUrlGmail";
 import fs from "fs";
 import GmailListing from "../model/gmailListingUrl.model";
 import { loadLocalHtmlWithPuppeteer, scrapWithScrapingBee } from "../service/details.scarpping";
+import { GmailMessageService, oAuth2Client, TOKEN_PATH } from "../../listingUrlGmail";
 
 export const gmailAuth = (req: Request, res: Response) => {
   const url = oAuth2Client.generateAuthUrl({
