@@ -50,7 +50,8 @@ const BASE_URL = "https://app.scrapingbee.com/api/v1/";
 
 export const scrapWithScrapingBee = async (pageUrl: string): Promise<string | null> => {
     const MAX_RETRIES = 3;
-
+    //redomly generate html file name
+    const fileName = `scrapingbee_result_${Date.now()}.html`;
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
             const config = {
@@ -77,10 +78,10 @@ export const scrapWithScrapingBee = async (pageUrl: string): Promise<string | nu
 
             if (!html || typeof html !== "string") throw new Error("Invalid HTML response");
 
-            fs.writeFileSync("scrapingbee_result.html", html, "utf-8");
+            fs.writeFileSync(fileName, html, "utf-8");
             console.log("💾 Saved ScrapingBee HTML result (attempt", attempt, ")");
 
-            return path.resolve("scrapingbee_result.html");
+            return path.resolve(fileName);
         } catch (error: any) {
             console.error(`💥 ScrapingBee error (attempt ${attempt}/${MAX_RETRIES}):`, error.message);
 
@@ -228,6 +229,11 @@ export const loadLocalHtmlWithPuppeteer = async (localFilePath: string) => {
         console.error("💥 Puppeteer failed:", err.message);
     } finally {
         if (browser) await browser.close();
+       try {
+         fs.unlinkSync(localFilePath);
+       } catch (error) {
+        console.error("💥 Error deleting local file:", error);
+       }
     }
 };
 

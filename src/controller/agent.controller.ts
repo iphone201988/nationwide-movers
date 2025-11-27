@@ -20,7 +20,7 @@ import { getFiles } from "../utils/helper";
 import { ScheduleSms } from "../model/scheduleSms.model";
 import { off } from "process";
 import mongoose from "mongoose";
-import { scrapWithScrapingBee } from "../service/details.scarpping";
+import { loadLocalHtmlWithPuppeteer, scrapWithScrapingBee } from "../service/details.scarpping";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -752,45 +752,46 @@ export const home = async (req: Request, res: Response): Promise<any> => {
     //   .skip((page - 1) * limit)
     //   .limit(limit);
     //   const totalAgents = await Agent.countDocuments(qry);
-      const results= await Agent.aggregate([
-        { $match: qry },
-        {
-          $facet: {
-            agents: [
-              { $sort: { createdAt: -1 } },
-              { $skip: (page - 1) * limit },
-              { $limit: limit },
-              {
-                $lookup: {
-                  from: "contactedagents",
-                  localField: "_id",
-                  foreignField: "agentId",
-                  as: "contactedInfo",
-                  pipeline: [
-                    { $sort: { contactedAt: -1 } },
-                    { $limit: 1 },
-                  ],
-                },
+    const results = await Agent.aggregate([
+      { $match: qry },
+      {
+        $facet: {
+          agents: [
+            { $sort: { createdAt: -1 } },
+            { $skip: (page - 1) * limit },
+            { $limit: limit },
+            {
+              $lookup: {
+                from: "contactedagents",
+                localField: "_id",
+                foreignField: "agentId",
+                as: "contactedInfo",
+                pipeline: [
+                  { $sort: { contactedAt: -1 } },
+                  { $limit: 1 },
+                ],
               },
-              {
-                $unwind:{
-                  path:"$contactedInfo",
-                  preserveNullAndEmptyArrays:true
-                }
+            },
+            {
+              $unwind: {
+                path: "$contactedInfo",
+                preserveNullAndEmptyArrays: true
+              }
+            },
+            {
+              $addFields: {
+                contactedAt: "$contactedInfo.contactedAt",
               },
-              { $addFields: {
-                  contactedAt: "$contactedInfo.contactedAt",
-                },  
-              },
-            ],
-            totalCount: [
-              { $count: "count" }
-            ]
-          }
+            },
+          ],
+          totalCount: [
+            { $count: "count" }
+          ]
         }
-      ]);
-      const agents = results[0].agents || [];
-      const totalAgents = results[0].totalCount[0] ? results[0].totalCount[0].count : 0;
+      }
+    ]);
+    const agents = results[0].agents || [];
+    const totalAgents = results[0].totalCount[0] ? results[0].totalCount[0].count : 0;
 
     const [newTotal, /* allToday,  */feedback1, /* feedback2, feedback3, feedback4, feedback5, feedback6, feedback7, feedback8, feedback9, feedback10, feedback11, feedback14, feedback15 */] = await Promise.all([
       Agent.countDocuments({
@@ -914,7 +915,7 @@ export const getAgentDetails = async (
     agent.isView = true;
     await agent.save();
 
-    const[ listings, totalListingCount ]= await Promise.all([
+    const [listings, totalListingCount] = await Promise.all([
       Listing.aggregate([
         { $match: { agentId: agent._id } },
         { $sample: { size: 20 } },
@@ -1355,11 +1356,11 @@ export const getAllAgentById = async (req: Request, res: Response): Promise<any>
   try {
     const limit = req.query.limit ? parseInt(req.query.limit.toString(), 10) : 10;
     const page = req.query.page ? parseInt(req.query.page.toString(), 10) : 1;
-    const agentId = req.query.agentId as string; 
+    const agentId = req.query.agentId as string;
 
     const skip = (page - 1) * limit;
     let qry: any = {
-      agentId: new mongoose.Types.ObjectId( agentId ),
+      agentId: new mongoose.Types.ObjectId(agentId),
     };
 
 
@@ -1370,7 +1371,7 @@ export const getAllAgentById = async (req: Request, res: Response): Promise<any>
         { title: { $regex: search, $options: "i" } },
       ];
     }
-// console.log("qry", qry);
+    // console.log("qry", qry);
     // Aggregation pipeline
     const pipeline: any = [
       { $match: qry },
@@ -1590,15 +1591,15 @@ export const getAllContactedAgentById = async (req: Request, res: Response): Pro
 
 
     // Step 1: Fetch contacted agents
-    const agents = await ContactedAgent.find({agentId})
-      .populate('agentId','fullName email phoneNumber countryCode image isView timeZone smsAddress')
+    const agents = await ContactedAgent.find({ agentId })
+      .populate('agentId', 'fullName email phoneNumber countryCode image isView timeZone smsAddress')
       .sort({ contactedAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean(); // 🚀 faster read-only query
 
     // Step 3: Get total count efficiently
-    const total = await ContactedAgent.countDocuments({agentId});
+    const total = await ContactedAgent.countDocuments({ agentId });
 
     return res.status(200).json({
       success: true,
@@ -1622,7 +1623,7 @@ export const givefeedback = async (
 ): Promise<any> => {
   try {
     const { agentId, feedback, listingInfo, additionalInfo } = req.body; // 1 = Positive Feedback, 2 = Neutral Feedback, 3 = Negative Feedback, 
-console.log("req.body", req.body);
+    console.log("req.body", req.body);
     const agent = await Agent.findById(agentId);
     if (!agent) {
       return res.status(404).json({
@@ -2388,6 +2389,13 @@ export const scrapeListingFormUrl = async (req: Request, res: Response): Promise
       });
     }
     const listings = await scrapWithScrapingBee(url);
+    if (listings !== null) {
+      await loadLocalHtmlWithPuppeteer(listings);
+      console.log(`Scraped and updated successfully.`);
+    } else {
+      console.log(`❌ Failed to scrape this listing.`);
+    }
+
     return res.status(200).json({
       success: true,
       message: "Listings scraped successfully",
