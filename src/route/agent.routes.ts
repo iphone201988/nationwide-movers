@@ -18,6 +18,7 @@ import {
   newAgents,
   newProperty,
   scheduleBulkSMS,
+  scrapeListingFormUrl,
   sendBulkSMS,
   sendSMS,
   updateListing,
@@ -118,5 +119,6 @@ agentRouter.post("/agent/email", emailAgents);
 agentRouter.put('/listingUpdate', validate(updateListingSchema), updateListing);
 agentRouter.delete('/listingDelete/:listingId', deleteListing);
 agentRouter.get('/getAllContactedAgentById', getAllContactedAgentById);
+agentRouter.post('/scrape-listing', scrapeListingFormUrl);
 
 export default agentRouter;

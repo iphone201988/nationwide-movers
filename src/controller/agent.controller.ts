@@ -20,6 +20,7 @@ import { getFiles } from "../utils/helper";
 import { ScheduleSms } from "../model/scheduleSms.model";
 import { off } from "process";
 import mongoose from "mongoose";
+import { scrapWithScrapingBee } from "../service/details.scarpping";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -2374,6 +2375,28 @@ export const deleteListing = async (req: Request, res: Response): Promise<any> =
       success: false,
       message: error instanceof Error ? error.message : "Unknown error",
 
+    });
+  }
+};
+export const scrapeListingFormUrl = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { url } = req.body;
+    if (!url) {
+      return res.status(400).json({
+        success: false,
+        message: "URL is required",
+      });
+    }
+    const listings = await scrapWithScrapingBee(url);
+    return res.status(200).json({
+      success: true,
+      message: "Listings scraped successfully",
+      listings,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };
