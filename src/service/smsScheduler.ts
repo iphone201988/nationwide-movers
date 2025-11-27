@@ -23,7 +23,7 @@ const delay = (seconds: number) =>
  * Checks for pending SMS schedules and processes them
  */
 cron.schedule("* * * * *", async () => {
-    console.log("🕐 [Cron] Checking for scheduled SMS tasks...");
+    // console.log("🕐 [Cron] Checking for scheduled SMS tasks...");
 
     try {
         // Fetch pending tasks where whenToSend <= current UTC time
@@ -34,7 +34,7 @@ cron.schedule("* * * * *", async () => {
         });
 
         if (pendingSchedules.length === 0) {
-            console.log("✅ [Cron] No pending SMS tasks found.");
+            // console.log("✅ [Cron] No pending SMS tasks found.");
             return;
         }
 
