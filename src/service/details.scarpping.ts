@@ -49,6 +49,7 @@ const BASE_URL = "https://app.scrapingbee.com/api/v1/";
 // };
 
 export const scrapWithScrapingBee = async (pageUrl: string): Promise<string | null> => {
+    // console.log("Starting ScrapingBee request for URL:", pageUrl);
     const MAX_RETRIES = 3;
     //redomly generate html file name
     const fileName = `scrapingbee_result_${Date.now()}.html`;

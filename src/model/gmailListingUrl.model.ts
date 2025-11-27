@@ -2,10 +2,12 @@ import mongoose, { Schema, Document, Types } from "mongoose";
 
 
 const GmailListingSchema = new Schema(
-    {
+    {   messageId: { type: String, required: true,},
         url: { type: String, required: true },
+        isScraped: { type: Boolean, default: false  },
     }
 );
+GmailListingSchema.index({ messageId: 1 });
 
 
 
