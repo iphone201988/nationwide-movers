@@ -56,6 +56,7 @@ const getInbox = async (afterDateFormatted:string,beforeDateFormatted: string) =
         const exist =await GmailListing.findOne({messageId: message.id,isScraped:true});
         if(exist) continue;
         if(message.seeMoreUrl){
+            await GmailListing.updateOne({messageId: message.id},{url:message.seeMoreUrl},{upsert:true});
         const localFile = await scrapWithScrapingBee(message.seeMoreUrl);
         // console.log("Local File Path:", localFile);
             if (localFile !== null) {
@@ -77,7 +78,7 @@ const getInbox = async (afterDateFormatted:string,beforeDateFormatted: string) =
 };
 
 // Schedule to run every day at 2 AM
-cron.schedule("*/10 * * * *", async () => {
+cron.schedule("0 2 * * *", async () => {
      const afterDate = new Date();
     afterDate.setDate(afterDate.getDate() - 1); 
     const beforeDate = new Date();
