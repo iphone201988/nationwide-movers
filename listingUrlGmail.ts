@@ -5,8 +5,9 @@ import cheerio from "cheerio";
 // ----------------------------------------------------
 // Paths
 // ----------------------------------------------------
-const CREDENTIALS_PATH = path.join(__dirname, "credentials.json");
-export const TOKEN_PATH = path.join(__dirname, "token.json");
+const ROOT = process.cwd();           // runtime working dir where pm2 starts
+const CREDENTIALS_PATH = path.join(ROOT, 'credentials.json');
+export const TOKEN_PATH = path.join(ROOT, "token.json");
 
 // ----------------------------------------------------
 // Validate credentials.json
