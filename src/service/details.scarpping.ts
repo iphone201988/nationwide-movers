@@ -1,6 +1,6 @@
 import axios from "axios";
 import fs from "fs";
-import puppeteer from "puppeteer";
+import puppeteer, { Browser, Page } from "puppeteer";
 import path from "path";
 import { exec } from "child_process";
 import * as cheerio from "cheerio";
@@ -172,69 +172,75 @@ const saveScrapedData = async (scrapedData: any) => {
 };
 
 export const loadLocalHtmlWithPuppeteer = async (localFilePath: string) => {
-    let browser: any;
-    try {
-        browser = await puppeteer.launch({ headless: true });
+  let browser: Browser | null = null;
 
-        const page = await browser.newPage();
+  try {
+    browser = await puppeteer.launch({
+      headless: true, // or 'new' depending on puppeteer version
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--disable-features=IsolateOrigins,site-per-process",
+        "--disable-features=VizDisplayCompositor",
+      ],
+    });
 
-        console.log("🌐 Injecting local HTML content...");
+    const page: Page = await browser.newPage();
 
-        const html = fs.readFileSync(localFilePath, "utf-8");
+    console.log("🌐 Injecting local HTML content...");
 
-        await page.setContent(html, { waitUntil: "domcontentloaded" });
+    const html = fs.readFileSync(localFilePath, "utf-8");
 
-        await autoScroll(page);
+    await page.setContent(html, { waitUntil: "domcontentloaded" });
 
-        const outputFile = "scrolled_local_result.html";
+    await autoScroll(page);
 
-        if (fs.existsSync(outputFile)) {
-            console.log("🗑️ Removed previous saved HTML");
-            fs.unlinkSync(outputFile);
-        }
+    const outputFile = "scrolled_local_result.html";
 
-        const finalHtml = await page.content();
-        fs.writeFileSync(outputFile, finalHtml, "utf-8");
-        console.log("💾 Saved new scrolled local HTML result:", outputFile);
-
-        // const absolutePath = path.resolve(outputFile);
-        // const fileUrl = `file://${absolutePath}`;
-
-        // if (process.platform === "win32") {
-        //     exec(`start ${fileUrl}`);
-        // } else if (process.platform === "darwin") {
-        //     exec(`open ${fileUrl}`);
-        // } else {
-        //     exec(`xdg-open ${fileUrl}`);
-        // }
-
-        const galleryImages = await scrapeGalleryImages(page);
-
-        const scrapedData = await scrapePropertyData(outputFile);
-
-        scrapedData.images = galleryImages;
-
-        // console.log(scrapedData);
-        // const txtFile = "scraped_data.txt";
-        // fs.writeFileSync(txtFile, JSON.stringify(scrapedData, null, 2), "utf-8");
-        try {
-            await saveScrapedData(scrapedData);
-        } catch (error) {
-            console.error("💥 Error saving scraped data to DB:", error);
-        }
-
-        fs.unlinkSync(localFilePath);
-
-    } catch (err: any) {
-        console.error("💥 Puppeteer failed:", err.message);
-    } finally {
-        if (browser) await browser.close();
-       try {
-         fs.unlinkSync(localFilePath);
-       } catch (error) {
-        console.error("💥 Error deleting local file:", error);
-       }
+    if (fs.existsSync(outputFile)) {
+      console.log("🗑️ Removed previous saved HTML");
+      fs.unlinkSync(outputFile);
     }
+
+    const finalHtml = await page.content();
+    fs.writeFileSync(outputFile, finalHtml, "utf-8");
+    console.log("💾 Saved new scrolled local HTML result:", outputFile);
+
+    const galleryImages = await scrapeGalleryImages(page);
+    const scrapedData = await scrapePropertyData(outputFile);
+
+    scrapedData.images = galleryImages;
+
+    try {
+      await saveScrapedData(scrapedData);
+    } catch (error) {
+      console.error("💥 Error saving scraped data to DB:", error);
+    }
+
+    // delete temp local file
+    try {
+      fs.unlinkSync(localFilePath);
+    } catch (error) {
+      console.error("💥 Error deleting local file:", error);
+    }
+
+  } catch (err: any) {
+    console.error("💥 Puppeteer failed:", err.message);
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+    // double-safety: if file still exists, clean it
+    try {
+      if (fs.existsSync(localFilePath)) {
+        fs.unlinkSync(localFilePath);
+      }
+    } catch (error) {
+      console.error("💥 Error deleting local file in finally:", error);
+    }
+  }
 };
 
 // export const scrapePropertyData = async (htmlFilePath: string) => {
