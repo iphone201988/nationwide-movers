@@ -7,16 +7,22 @@ export interface ITruliaListing extends Document {
   createdAt: Date;
   updatedAt: Date;
   isScraped: boolean; // Flag to indicate if detailed scraping has been done
+  priority: number; // Priority for scraping order
 }
 
 const truliaListingSchema = new Schema<ITruliaListing>({
   sourceUrl: { type: String, required: true, index: true },
   scrapedUrl: { type: String, required: true, trim: true, index: true },
   listingUrl: { type: String, required: true, trim: true, index: true },
-  isScraped: { type: Boolean, default: false }
+  isScraped: { type: Boolean, default: false },
+  priority: { type: Number, default: 0 },
 }, {
   timestamps: true
 });
+truliaListingSchema.index({ sourceUrl: 1, scrapedUrl: 1, listingUrl: 1 }, { unique: true });
+truliaListingSchema.index({ isScraped: 1, priority: -1, createdAt: 1 });
+truliaListingSchema.index({ createdAt: -1 })
+truliaListingSchema.index({ priority: -1 });
 
 export const TruliaListing = mongoose.model<ITruliaListing>('TruliaListing', truliaListingSchema);
 export default TruliaListing;
