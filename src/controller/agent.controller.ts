@@ -2401,11 +2401,6 @@ export const scrapeListingFormUrl = async (req: Request, res: Response): Promise
       console.log(`❌ Failed to scrape this listing.`);
     }
 
-    return res.status(200).json({
-      success: true,
-      message: "Listings scraped successfully",
-      listings,
-    });
   } catch (error) {
     return res.status(500).json({
       success: false,

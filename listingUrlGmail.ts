@@ -39,9 +39,6 @@ const getGmailClient = (accessToken: string, refreshToken: string) => {
   return google.gmail({ version: "v1", auth: oAuth2Client });
 };
 
-// ----------------------------------------------------
-// Helpers
-// ----------------------------------------------------
 const decodeBody = (body: gmail_v1.Schema$MessagePartBody | undefined): string => {
   if (!body?.data) return "";
   const data = body.data.replace(/-/g, "+").replace(/_/g, "/");
