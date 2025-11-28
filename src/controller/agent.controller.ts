@@ -2390,6 +2390,11 @@ export const scrapeListingFormUrl = async (req: Request, res: Response): Promise
     }
     const listings = await scrapWithScrapingBee(url);
     if (listings !== null) {
+      res.status(200).json({
+      success: true,
+      message: "Listings scraped successfully",
+      listings,
+    });
       await loadLocalHtmlWithPuppeteer(listings);
       console.log(`Scraped and updated successfully.`);
     } else {
