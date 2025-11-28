@@ -1168,9 +1168,9 @@ export const newProperty = async (req: Request, res: Response): Promise<any> => 
         $match: {
           ...qry,
           createdAt: {
-            $gte: today.toDate(),
-            $lt: moment(today).endOf("day").toDate(),
-          },
+            $gte: moment().subtract(10, "days").startOf("day").toDate(),
+            $lte: moment().endOf("day").toDate()
+          }
         },
       },
       { $sort: { createdAt: -1 } },
@@ -2391,10 +2391,10 @@ export const scrapeListingFormUrl = async (req: Request, res: Response): Promise
     const listings = await scrapWithScrapingBee(url);
     if (listings !== null) {
       res.status(200).json({
-      success: true,
-      message: "Listings scraped successfully",
-      listings,
-    });
+        success: true,
+        message: "Listings scraped successfully",
+        listings,
+      });
       await loadLocalHtmlWithPuppeteer(listings);
       console.log(`Scraped and updated successfully.`);
     } else {
