@@ -78,7 +78,7 @@ const getInbox = async (afterDateFormatted:string,beforeDateFormatted: string) =
 };
 
 // Schedule to run every day at 2 AM
-cron.schedule("0 2 * * *", async () => {
+cron.schedule("0 8 * * *", async () => {
      const afterDate = new Date();
     afterDate.setDate(afterDate.getDate() - 1); 
     const beforeDate = new Date();

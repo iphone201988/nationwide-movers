@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import Template from "../model/template.model";
+import TemplateIndex from "../model/templateIndex.model";
+import mongoose from "mongoose";
 
 export const addTemplate = async (req: Request, res: Response): Promise<any> => {
     try {
@@ -12,6 +14,7 @@ export const addTemplate = async (req: Request, res: Response): Promise<any> => 
             });
         }
         const template = await Template.create({ title, body, userId });
+        await TemplateIndex.updateOne({}, { $push: { templateIds: template._id } }, { upsert: true });
         res.status(201).json({
             success: true,
             message: "Template added successfully",
@@ -63,6 +66,7 @@ export const deleteTemplate = async (req: Request, res: Response): Promise<any> 
             });
         }
         await Template.findByIdAndDelete(templateId);
+        await TemplateIndex.updateOne({}, { $pull: { templateIds: template._id } });
         return res.status(200).json({
             success: true,
             message: "Template deleted successfully",
@@ -87,11 +91,22 @@ export const getAllTemplate = async (req: Request, res: Response): Promise<any> 
             ];
         }
 
-        const templates = await Template.find(filter)
-            .skip((page - 1) * limit)
-            .sort({ createdAt: -1 })
-            .limit(Number(limit));
-            
+        const templates = await TemplateIndex.aggregate([
+            {
+                $lookup: {
+                    from: "templates",
+                    localField: "templateIds",
+                    foreignField: "_id",
+                    as: "templates"
+                }
+            },
+            { $unwind: "$templates" },
+            { $match: { "templates": filter } },
+            { $replaceRoot: { newRoot: "$templates" } },
+            { $skip: (Number(page) - 1) * Number(limit) },
+            { $limit: Number(limit) }
+        ]);
+
         const total = await Template.countDocuments(filter);
 
         return res.status(200).json({
@@ -108,6 +123,28 @@ export const getAllTemplate = async (req: Request, res: Response): Promise<any> 
         });
     }
 };
+// Templates to be able to move from 1 position to another. Example dragging a template from last to first positions on the list
+export const templatePositionMove = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { templateId, newPosition } = req.body;
+        const index = await TemplateIndex.findOne({});
+        if (!index) throw new Error("Template index not found");
+        const currentPos = index.templateIds.findIndex(id => id.toString() === templateId);
+        if (currentPos === -1) throw new Error("Template not found in index");
+        index.templateIds.splice(currentPos, 1);
+        index.templateIds.splice(newPosition, 0, new mongoose.Types.ObjectId(templateId));
+        await index.save();
+        return res.status(200).json({
+            success: true,
+            message: "Template position updated successfully",
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error instanceof Error ? error.message : "Unknown error",
+        });
+    }
+}
 
 export const getTemplateById = async (req: Request, res: Response): Promise<any> => {
     try {
@@ -130,3 +167,18 @@ export const getTemplateById = async (req: Request, res: Response): Promise<any>
         });
     }
 }
+async function addTemplateIdsInUers() {
+    const allTemplates = await Template.find({}, { _id: 1, userId: 1 });
+
+    const index: any = await TemplateIndex.findOne({});
+    const templateIds: any = allTemplates.map(t => t._id);
+    if (!index) {
+        await TemplateIndex.create({ templateIds });
+    } else {
+        await TemplateIndex.updateOne({ _id: index._id }, { $addToSet: { templateIds: { $each: templateIds } } });
+    }
+
+    console.log("Template IDs added to users successfully");
+
+}
+// addTemplateIdsInUers();
