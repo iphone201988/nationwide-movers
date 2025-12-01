@@ -82,38 +82,64 @@ export const deleteTemplate = async (req: Request, res: Response): Promise<any> 
 export const getAllTemplate = async (req: Request, res: Response): Promise<any> => {
     try {
         const { search, page = 1, limit = 10 } = req.query as any;
-        const filter: any = {};
+        const pageNum = Math.max(Number(page), 1);
+        const pageSize = Math.max(Number(limit), 1);
 
+        const matchStage: any = {};
         if (search) {
-            filter.$or = [
-                { "templates.title": { $regex: search, $options: "i" } },
-                { "templates.body": { $regex: search, $options: "i" } }
+            matchStage.$or = [
+                { title: { $regex: search, $options: "i" } },
+                { body: { $regex: search, $options: "i" } }
             ];
         }
 
-        const templates = await TemplateIndex.aggregate([
+        const agg:any = [
             {
                 $lookup: {
                     from: "templates",
-                    localField: "templateIds",
-                    foreignField: "_id",
+                    let: { ids: "$templateIds" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: { $in: ["$_id", "$$ids"] }
+                            }
+                        },
+                        {
+                            $addFields: {
+                                order: { $indexOfArray: ["$$ids", "$_id"] }
+                            }
+                        },
+                        { $sort: { order: 1 } }
+                    ],
                     as: "templates"
                 }
             },
-            { $unwind: "$templates" },
-            { $match:  filter  },
-            { $replaceRoot: { newRoot: "$templates" } },
-            { $skip: (Number(page) - 1) * Number(limit) },
-            { $limit: Number(limit) }
-        ]);
 
-        const total = await Template.countDocuments(filter);
+            { $unwind: "$templates" },
+            { $replaceRoot: { newRoot: "$templates" } },
+            { $match: matchStage },
+            {
+                $facet: {
+                    metadata: [{ $count: "total" }],
+                    data: [
+                        { $skip: (pageNum - 1) * pageSize },
+                        { $limit: pageSize }
+                    ]
+                }
+            }
+        ];
+
+        const result = await TemplateIndex.aggregate(agg);
+
+        const metadata = result[0].metadata[0] || { total: 0 };
+        const total = metadata.total ?? 0;
+        const templates = result[0].data;
 
         return res.status(200).json({
             success: true,
             data: templates,
-            page: Number(page),
-            totalPages: Math.ceil(total / Number(limit)),
+            page: pageNum,
+            totalPages: Math.ceil(total / pageSize),
             total,
         });
     } catch (error) {
@@ -127,6 +153,7 @@ export const getAllTemplate = async (req: Request, res: Response): Promise<any> 
 export const templatePositionMove = async (req: Request, res: Response): Promise<any> => {
     try {
         const { templateId, newPosition } = req.body;
+        console.log("templateId, newPosition", templateId, newPosition);
         const index = await TemplateIndex.findOne({});
         if (!index) throw new Error("Template index not found");
         const currentPos = index.templateIds.findIndex(id => id.toString() === templateId);
@@ -137,6 +164,7 @@ export const templatePositionMove = async (req: Request, res: Response): Promise
         return res.status(200).json({
             success: true,
             message: "Template position updated successfully",
+            index,
         });
     } catch (error) {
         return res.status(500).json({
