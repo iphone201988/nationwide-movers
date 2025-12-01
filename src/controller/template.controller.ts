@@ -86,8 +86,8 @@ export const getAllTemplate = async (req: Request, res: Response): Promise<any> 
 
         if (search) {
             filter.$or = [
-                { title: { $regex: search, $options: "i" } },
-                { body: { $regex: search, $options: "i" } }
+                { "templates.title": { $regex: search, $options: "i" } },
+                { "templates.body": { $regex: search, $options: "i" } }
             ];
         }
 
@@ -101,7 +101,7 @@ export const getAllTemplate = async (req: Request, res: Response): Promise<any> 
                 }
             },
             { $unwind: "$templates" },
-            { $match: { "templates": filter } },
+            { $match:  filter  },
             { $replaceRoot: { newRoot: "$templates" } },
             { $skip: (Number(page) - 1) * Number(limit) },
             { $limit: Number(limit) }
