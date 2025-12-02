@@ -150,9 +150,21 @@ const saveScrapedData = async (scrapedData: any) => {
             price: scrapedData.price,});
 
         if (existingListing) {
+            existingListing.agentId = agentDoc ? agentDoc._id : existingListing.agentId;
+            existingListing.beds = scrapedData.beds || existingListing.beds;
+            existingListing.baths = scrapedData.baths || existingListing.baths;
+            existingListing.floor = scrapedData.floor || existingListing.floor;
+            existingListing.description = scrapedData.description || existingListing.description;
+            existingListing.homeHighlights = scrapedData.homeHighlights || existingListing.homeHighlights;
+            existingListing.features = scrapedData.features || existingListing.features;
+            existingListing.communityDescription = scrapedData.communityDescription || existingListing.communityDescription;
+            existingListing.officeDetails = scrapedData.officeDetails || existingListing.officeDetails;
+            existingListing.images = scrapedData.images || existingListing.images;
+            await existingListing.save();
+
             console.log("ℹ️ Listing already exists, skipping creation:", existingListing._id);
             return { listing: existingListing, agent: agentDoc };
-        }
+        }else{
         // Always create a new listing
         const listingDoc = new Listing({
             title: scrapedData.title,
@@ -174,6 +186,7 @@ const saveScrapedData = async (scrapedData: any) => {
         console.log("✅ Listing saved with Agent:", listingDoc._id);
 
         return { listing: listingDoc, agent: agentDoc };
+    }
     } catch (err) {
         console.error("💥 Error saving scraped data:", err);
         throw err;
