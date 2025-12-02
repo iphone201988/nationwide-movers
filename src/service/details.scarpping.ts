@@ -144,7 +144,15 @@ const saveScrapedData = async (scrapedData: any) => {
             await agentDoc.save();
             console.log("✅ Agent saved:", agentDoc._id);
         }
+        const existingListing = await Listing.findOne({
+            title: scrapedData.title,
+            address: scrapedData.address,
+            price: scrapedData.price,});
 
+        if (existingListing) {
+            console.log("ℹ️ Listing already exists, skipping creation:", existingListing._id);
+            return { listing: existingListing, agent: agentDoc };
+        }
         // Always create a new listing
         const listingDoc = new Listing({
             title: scrapedData.title,
