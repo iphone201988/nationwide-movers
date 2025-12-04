@@ -43,6 +43,7 @@ export interface IAgent extends Document {
   homeowner: string;
   listingInfo?: number;
   additionalInfo?: number;
+  discountCardPdf?: string;
 }
 
 const agentSchema = new Schema<IAgent>(
@@ -168,7 +169,8 @@ const agentSchema = new Schema<IAgent>(
     },
     homeowner:{
       type: String,
-    }
+    },
+    discountCardPdf: { type: String, default: null },
   },
   {
     timestamps: true,

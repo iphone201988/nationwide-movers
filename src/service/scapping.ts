@@ -4,10 +4,162 @@ import fs from "fs";
 import "dotenv/config";
 import * as cheerio from "cheerio";
 import puppeteer from "puppeteer";
+import path from "path";
 
 const API_KEY = process.env.API_KEY_SCRAP_BEE;
 const BASE_URL = "https://app.scrapingbee.com/api/v1/";
 
+export const createAgentDiscountCardPdf = async (agentData: any,) => {
+    try {
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
+
+        await page.setContent(`
+            <!DOCTYPE html>
+                <html lang="en">
+
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Document</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            background: #f3f3f3;
+                        }
+
+                        .card {
+                            width: 500px;
+                            background: #fff;
+                            padding: 30px;
+                            border-radius: 48px;
+                            margin: 40px auto;
+                            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+                        }
+
+                        .card-header {
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                            margin-bottom: 8px;
+                        }
+
+                        .logo {
+                            width: 150px;
+                            height: auto;
+                            box-shadow: 4px -4px 16px rgba(0, 0, 0, 0.4);
+                            border-radius: 24px;
+                        }
+
+                        .title-section h1 {
+                            text-align: center;
+                            font-size: 26px;
+                            color: #181656;
+                            margin: 0;
+                        }
+
+                        .subtitle {
+                            font-size: 20px;
+                            text-align: center;
+                            font-weight: bold;
+                            margin: 16px 0;
+                            color: #181656;
+                        }
+
+                        .code-title {
+                            text-align: center;
+                            font-size: 24px;
+                            color: #181656;
+                            margin-top: 0;
+                            margin-bottom: 12px;
+                        }
+
+                        .discount-code {
+                            text-align: center;
+                            font-size: 55px;
+                            color: #AB1C10;
+                            margin: 0;
+                            font-weight: bold;
+                        }
+
+                        .mid-section{
+                            display: flex;
+                            align-items: baseline;
+                            color: #181656 !important;
+                            gap: 12px;
+                        }
+
+                        .services {
+                            list-style: disc;
+                            padding-left: 20px;
+                            font-size: 16px;
+                            margin-bottom: 0;
+                        }
+
+                        .contact {
+                            font-size: 14px;
+                            margin: 5px 0;
+                            color: #181656;
+                        }
+
+                        .contact a {
+                            color: #181656;
+                            text-decoration: underline;
+                        }
+                    </style>
+                </head>
+
+                <body>
+                    <div class="card">
+                        <div class="card-header">
+                            <img src="https://www.nationwideusamovers.com/wp-content/uploads/2021/01/Logo-768x666.png" alt="Company Logo" class="logo">
+
+                            <div class="title-section">
+                                <h1>MOVE DISCOUNT CARD</h1>
+                                <p class="subtitle">FREE MOVING ESTIMATE</p>
+                                <p class="subtitle">UP TO 40% DISCOUNT ON MOVING</p>
+                            </div>
+                        </div>
+
+                        <div class="mid-section">
+                            <ul class="services">
+                                <li>Local Moves</li>
+                                <li>Long Distance Moves</li>
+                                <li>Storage</li>
+                                <li>Moving Help</li>
+                            </ul>
+                    
+                            <div class="">
+                            <h2 class="code-title">MOVE DISCOUNT CODE</h2>
+                            <h1 class="discount-code">${agentData?.discountCodeCoupon}</h1>
+                        </div>
+                        </div>
+
+                        <p class="contact">
+                            Click to CALL/TEXT: <a href="tel:18009766833">1-800-976-6833</a>
+                        </p>
+                        <p class="contact">
+                            Click to CHAT or SET UP APPOINTMENT:
+                            <a href="https://nationwideusamovers.com">www.nationwideusamovers.com</a>
+                        </p>
+                    </div>
+
+                </body>
+
+                </html>
+    `);
+
+        const pdf = await page.pdf({ format: "a5" });
+        // save src/uploads/Discount${agent.name}.pdf
+       const outputPath = path.join(__dirname, `src/uploads/DiscountCard_${agentData?.fullName.replace(/ /g, "_")}.pdf`);
+        fs.writeFileSync(outputPath, pdf);
+        return outputPath;
+        await browser.close();
+    } catch (error) {
+        console.error("Error generating PDF:", error);
+        return null;
+    }
+};
 // Test ScrapingBee connection first
 const testScrapingBeeConnection = async (): Promise<boolean> => {
     try {
@@ -1068,282 +1220,282 @@ export async function scrapeRealtors() {
 //     "https://www.trulia.com/County/NY/Kings_Real_Estate/25_p/"
 // ];
 
-const websites = [
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/2_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/3_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/4_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/5_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/6_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/7_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/8_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/9_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/10_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/11_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/12_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/13_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/14_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/15_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/16_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/17_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/18_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/19_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/20_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/21_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/22_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/23_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/24_p/",
-    // "https://www.trulia.com/County/NJ/Bergen_Real_Estate/25_p/",
+// const websites = [
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/2_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/3_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/4_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/5_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/6_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/7_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/8_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/9_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/10_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/11_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/12_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/13_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/14_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/15_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/16_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/17_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/18_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/19_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/20_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/21_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/22_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/23_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/24_p/",
+// "https://www.trulia.com/County/NJ/Bergen_Real_Estate/25_p/",
 
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/2_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/3_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/4_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/5_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/6_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/7_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/8_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/9_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/10_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/11_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/12_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/13_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/14_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/15_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/16_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/17_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/18_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/19_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/20_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/21_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/22_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/23_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/24_p/",
-    // "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/25_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/2_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/3_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/4_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/5_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/6_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/7_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/8_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/9_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/10_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/11_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/12_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/13_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/14_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/15_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/16_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/17_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/18_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/19_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/20_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/21_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/22_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/23_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/24_p/",
+// "https://www.trulia.com/County/NJ/Middlesex_Real_Estate/25_p/",
 
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/2_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/3_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/4_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/5_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/6_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/7_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/8_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/9_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/10_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/11_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/12_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/13_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/14_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/15_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/16_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/17_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/18_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/19_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/20_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/21_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/22_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/23_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/24_p/",
-    // "https://www.trulia.com/County/NJ/Essex_Real_Estate/25_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/2_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/3_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/4_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/5_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/6_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/7_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/8_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/9_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/10_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/11_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/12_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/13_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/14_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/15_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/16_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/17_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/18_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/19_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/20_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/21_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/22_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/23_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/24_p/",
+// "https://www.trulia.com/County/NJ/Essex_Real_Estate/25_p/",
 
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/2_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/3_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/4_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/5_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/6_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/7_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/8_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/9_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/10_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/11_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/12_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/13_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/14_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/15_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/16_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/17_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/18_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/19_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/20_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/21_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/22_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/23_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/24_p/",
-    // "https://www.trulia.com/County/NJ/Hudson_Real_Estate/25_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/2_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/3_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/4_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/5_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/6_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/7_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/8_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/9_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/10_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/11_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/12_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/13_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/14_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/15_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/16_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/17_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/18_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/19_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/20_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/21_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/22_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/23_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/24_p/",
+// "https://www.trulia.com/County/NJ/Hudson_Real_Estate/25_p/",
 
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/2_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/3_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/4_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/5_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/6_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/7_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/8_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/9_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/10_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/11_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/12_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/13_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/14_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/15_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/16_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/17_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/18_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/19_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/20_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/21_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/22_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/23_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/24_p/",
-    // "https://www.trulia.com/County/NJ/Ocean_Real_Estate/25_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/2_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/3_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/4_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/5_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/6_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/7_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/8_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/9_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/10_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/11_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/12_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/13_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/14_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/15_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/16_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/17_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/18_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/19_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/20_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/21_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/22_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/23_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/24_p/",
+// "https://www.trulia.com/County/NJ/Ocean_Real_Estate/25_p/",
 
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/2_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/3_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/4_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/5_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/6_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/7_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/8_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/9_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/10_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/11_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/12_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/13_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/14_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/15_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/16_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/17_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/18_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/19_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/20_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/21_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/22_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/23_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/24_p/",
-    // "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/25_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/2_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/3_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/4_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/5_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/6_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/7_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/8_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/9_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/10_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/11_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/12_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/13_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/14_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/15_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/16_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/17_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/18_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/19_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/20_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/21_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/22_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/23_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/24_p/",
+// "https://www.trulia.com/County/NJ/Monmouth_Real_Estate/25_p/",
 
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/",
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/2_p/",
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/3_p/",
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/4_p/",
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/5_p/",
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/6_p/",
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/7_p/",
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/8_p/",
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/9_p/",
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/10_p/",
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/11_p/",
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/12_p/",
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/13_p/",
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/14_p/",
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/15_p/",
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/16_p/",
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/17_p/",
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/18_p/",
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/19_p/",
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/20_p/",
-    // "https://www.trulia.com/County/NJ/Union_Real_Estate/21_p/",
-     
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/2_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/3_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/4_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/5_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/6_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/7_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/8_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/9_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/10_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/11_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/12_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/13_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/14_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/15_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/16_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/17_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/18_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/19_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/20_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/21_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/22_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/23_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/24_p/",
-    // "https://www.trulia.com/County/NJ/Camden_Real_Estate/25_p/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/2_p/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/3_p/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/4_p/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/5_p/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/6_p/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/7_p/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/8_p/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/9_p/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/10_p/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/11_p/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/12_p/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/13_p/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/14_p/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/15_p/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/16_p/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/17_p/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/18_p/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/19_p/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/20_p/",
+// "https://www.trulia.com/County/NJ/Union_Real_Estate/21_p/",
 
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/2_p/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/3_p/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/4_p/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/5_p/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/6_p/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/7_p/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/8_p/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/9_p/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/10_p/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/11_p/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/12_p/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/13_p/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/14_p/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/15_p/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/16_p/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/17_p/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/18_p/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/19_p/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/20_p/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/21_p/",
-    // "https://www.trulia.com/County/NJ/Morris_Real_Estate/22_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/2_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/3_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/4_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/5_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/6_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/7_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/8_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/9_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/10_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/11_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/12_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/13_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/14_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/15_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/16_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/17_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/18_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/19_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/20_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/21_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/22_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/23_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/24_p/",
+// "https://www.trulia.com/County/NJ/Camden_Real_Estate/25_p/",
 
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/2_p/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/3_p/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/4_p/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/5_p/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/6_p/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/7_p/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/8_p/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/9_p/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/10_p/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/11_p/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/12_p/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/13_p/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/14_p/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/15_p/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/16_p/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/17_p/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/18_p/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/19_p/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/20_p/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/21_p/",
-    // "https://www.trulia.com/County/NJ/Passaic_Real_Estate/22_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/2_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/3_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/4_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/5_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/6_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/7_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/8_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/9_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/10_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/11_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/12_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/13_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/14_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/15_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/16_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/17_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/18_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/19_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/20_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/21_p/",
+// "https://www.trulia.com/County/NJ/Morris_Real_Estate/22_p/",
 
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/2_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/3_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/4_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/5_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/6_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/7_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/8_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/9_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/10_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/11_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/12_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/13_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/14_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/15_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/16_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/17_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/18_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/19_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/20_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/21_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/22_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/23_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/24_p/",
-    // "https://www.trulia.com/County/NJ/Burlington_Real_Estate/25_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/2_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/3_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/4_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/5_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/6_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/7_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/8_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/9_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/10_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/11_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/12_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/13_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/14_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/15_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/16_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/17_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/18_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/19_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/20_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/21_p/",
+// "https://www.trulia.com/County/NJ/Passaic_Real_Estate/22_p/",
+
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/2_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/3_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/4_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/5_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/6_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/7_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/8_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/9_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/10_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/11_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/12_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/13_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/14_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/15_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/16_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/17_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/18_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/19_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/20_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/21_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/22_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/23_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/24_p/",
+// "https://www.trulia.com/County/NJ/Burlington_Real_Estate/25_p/",
 
 
 //     "https://www.trulia.com/County/NJ/Mercer_Real_Estate/",
@@ -1537,8 +1689,25 @@ const websites = [
 //     "https://www.trulia.com/County/NJ/Salem_Real_Estate/6_p/",
 //     "https://www.trulia.com/County/NJ/Salem_Real_Estate/7_p/",
 //     "https://www.trulia.com/County/NJ/Salem_Real_Estate/8_p/"
-];
+// ];
 
+const websites = [
+
+    //Queens County, NY
+    "https://www.trulia.com/for_sale/Queens,NY/700000p_price/",
+    // "https://www.trulia.com/for_sale/Queens,NY/700000p_price/1_p/",
+    // "https://www.trulia.com/for_sale/Queens,NY/700000p_price/2_p/",
+    // "https://www.trulia.com/for_sale/Queens,NY/700000p_price/3_p/",
+    // "https://www.trulia.com/for_sale/Queens,NY/700000p_price/4_p/",
+    // "https://www.trulia.com/for_sale/Queens,NY/700000p_price/5_p/",
+
+    //Kings County, NY
+    "https://www.trulia.com/for_sale/36047_c/700000p_price/",
+    // "https://www.trulia.com/for_sale/36047_c/700000p_price/2_p/",
+    // "https://www.trulia.com/for_sale/36047_c/700000p_price/3_p/",
+    // "https://www.trulia.com/for_sale/36047_c/700000p_price/4_p/",
+    // "https://www.trulia.com/for_sale/36047_c/700000p_price/5_p/",
+]
 
 export const runTruliaScraper = async () => {
     try {
@@ -1963,7 +2132,8 @@ const saveTruliaListings = async (sourceUrl: string, scrapedUrls: string[], scra
                 scrapedUrl: scrapedPageUrl,
                 listingUrl,
                 createdAt: new Date(),
-                updatedAt: new Date()
+                updatedAt: new Date(),
+                priority: 2
             });
 
             await newListing.save();

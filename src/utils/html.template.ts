@@ -11,6 +11,7 @@ export const createStaticEmailTemplate = (data: {
     headerColor: string;
     accentColor: string;
     message: string;
+    discountCodeCoupon?: string;
 }) => {
     const {
         recipientCompany,
@@ -24,7 +25,8 @@ export const createStaticEmailTemplate = (data: {
         serviceType,
         headerColor,
         accentColor,
-        message
+        message,
+        discountCodeCoupon
     } = data;
 
     const locationContext = recipientAddress ? 

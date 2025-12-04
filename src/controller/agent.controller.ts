@@ -21,6 +21,7 @@ import { ScheduleSms } from "../model/scheduleSms.model";
 import { off } from "process";
 import mongoose from "mongoose";
 import { loadLocalHtmlWithPuppeteer, scrapWithScrapingBee } from "../service/details.scarpping";
+import { createAgentDiscountCardPdf } from "../service/scapping";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -2158,7 +2159,11 @@ export const emailAgents = async (
       return res
         .status(400)
         .json({ success: false, message: "Agent email not found" });
-    }
+    };
+  //   if (agent.discountCodeCoupon) {
+  //   const outputPath = createAgentDiscountCardPdf(agent);
+  //   console.log("Generated PDF at:", outputPath);
+  // }
 
     const staticSenderDetails = {
       senderName: fullName || "Anthony Booker",
@@ -2177,6 +2182,7 @@ export const emailAgents = async (
       recipientAddress: agent.address,
       ...staticSenderDetails,
       message: message,
+      discountCodeCoupon: agent?.discountCodeCoupon,
     });
 
     const apiInstance = new brevo.TransactionalEmailsApi();
