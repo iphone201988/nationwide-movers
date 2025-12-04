@@ -305,7 +305,17 @@ export const generateDiscountCardForAgent = async (
 
   const html = buildCardHtml(agent, qrDataUrl);
 
-  const browser = await puppeteer.launch();
+  const browser  = await puppeteer.launch({
+    headless: true, // or 'new' depending on puppeteer version
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--disable-features=IsolateOrigins,site-per-process",
+      "--disable-features=VizDisplayCompositor",
+    ],
+  });
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: "networkidle0" });
 
