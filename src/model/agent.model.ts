@@ -44,6 +44,8 @@ export interface IAgent extends Document {
   listingInfo?: number;
   additionalInfo?: number;
   discountCardPdf?: string;
+  discountCardJpeg?: string;
+  qrCodeImage?: string;
 }
 
 const agentSchema = new Schema<IAgent>(
@@ -171,6 +173,8 @@ const agentSchema = new Schema<IAgent>(
       type: String,
     },
     discountCardPdf: { type: String, default: null },
+    discountCardJpeg: { type: String, default: null },
+    qrCodeImage: { type: String, default: null },
   },
   {
     timestamps: true,

@@ -150,8 +150,15 @@ export const createAgentDiscountCardPdf = async (agentData: any,) => {
     `);
 
         const pdf = await page.pdf({ format: "a5" });
-        // save src/uploads/Discount${agent.name}.pdf
-       const outputPath = path.join(__dirname, `src/uploads/DiscountCard_${agentData?.fullName.replace(/ /g, "_")}.pdf`);
+        // save uploads/Discount${agent.name}.pdf
+        // Get project root (works in both dev and production)
+        const getProjectRoot = () => {
+          if (__dirname.includes(path.join("dist", "src"))) {
+            return path.join(__dirname, "../../../");
+          }
+          return path.join(__dirname, "../../");
+        };
+        const outputPath = path.join(getProjectRoot(), `uploads/DiscountCard_${agentData?.fullName.replace(/ /g, "_")}.pdf`);
         fs.writeFileSync(outputPath, pdf);
         return outputPath;
         await browser.close();

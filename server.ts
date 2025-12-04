@@ -78,9 +78,21 @@ app.listen(PORT, () => {
 
 app.use(errorHandler);
 
+// Resolve uploads directory relative to project root (works in both dev and production)
+// In dev: __dirname = project root, so ./uploads = project root/uploads
+// In prod: __dirname = dist, so ./uploads = dist/uploads, need ../uploads
+const getProjectRoot = () => {
+  // Check if we're in dist folder (production mode)
+  if (__dirname.includes("dist") && !__dirname.includes("src")) {
+    return path.join(__dirname, "../");
+  }
+  // Development mode
+  return __dirname;
+};
+
 app.use(
     "/uploads",
-    express.static(path.resolve(path.join(__dirname, "./src/uploads")))
+    express.static(path.resolve(path.join(getProjectRoot(), "uploads")))
 );
 
 

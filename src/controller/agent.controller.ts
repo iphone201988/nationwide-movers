@@ -21,7 +21,8 @@ import { ScheduleSms } from "../model/scheduleSms.model";
 import { off } from "process";
 import mongoose from "mongoose";
 import { loadLocalHtmlWithPuppeteer, scrapWithScrapingBee } from "../service/details.scarpping";
-import { createAgentDiscountCardPdf } from "../service/scapping";
+import { generateDiscountCardForAgent } from "../service/discountCard.service";
+import { generateUniqueDiscountCode } from "../utils/discountCodeGenerator";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -1410,7 +1411,7 @@ export const getAllAgentById = async (req: Request, res: Response): Promise<any>
 
 export const sendSMS = async (req: Request, res: Response) => {
   try {
-    const { agentId, body } = req.body;
+    const { agentId, body, includeDiscountCard } = req.body;
 
     console.log("body", req.body);
 
@@ -1429,11 +1430,40 @@ export const sendSMS = async (req: Request, res: Response) => {
     const countryCode = agent?.countryCode || "+1";
     const phoneNumber = agent?.phoneNumber?.replace(/\D/g, "") || "";
 
-    const twilioResponse = await client.messages.create({
+    let mediaUrl: string[] | undefined;
+
+    if (includeDiscountCard) {
+      // Ensure discount code exists
+      if (!agent.discountCodeCoupon) {
+        const code = await generateUniqueDiscountCode();
+        agent.discountCodeCoupon = code;
+        await agent.save();
+      }
+      
+      // Generate discount card (will check if already exists)
+      const { pdfRelativePath, jpegRelativePath } = await generateDiscountCardForAgent(agent);
+      
+      // Save both paths to agent record
+      agent.discountCardPdf = pdfRelativePath;
+      agent.discountCardJpeg = jpegRelativePath;
+      await agent.save();
+
+      // Build public URL using /uploads static route
+      const jpegPublicPath = `/uploads/${jpegRelativePath.replace(/^src[\\/]/, "")}`.replace(/\\/g, "/");
+      mediaUrl = [`${process.env.BASE_URL || ""}${jpegPublicPath}`.replace(/\/+$/, "").replace(/(https?:\/\/)+/,'$1')];
+    }
+
+    const createOptions: any = {
       body: message,
       from: process.env.TWILIO_FROM,
       to: `${countryCode}${phoneNumber}`,
-    });
+    };
+
+    if (mediaUrl && mediaUrl.length) {
+      createOptions.mediaUrl = mediaUrl;
+    }
+
+    const twilioResponse = await client.messages.create(createOptions);
 
     if (twilioResponse.status === "failed" || twilioResponse.status === "undelivered") {
       console.error("Twilio SMS failed:", twilioResponse.errorMessage);
@@ -2159,11 +2189,22 @@ export const emailAgents = async (
       return res
         .status(400)
         .json({ success: false, message: "Agent email not found" });
-    };
-  //   if (agent.discountCodeCoupon) {
-  //   const outputPath = createAgentDiscountCardPdf(agent);
-  //   console.log("Generated PDF at:", outputPath);
-  // }
+    }
+
+    // Ensure agent has a discount code
+    if (!agent.discountCodeCoupon) {
+      const code = await generateUniqueDiscountCode();
+      agent.discountCodeCoupon = code;
+      await agent.save();
+    }
+
+    // Generate or refresh discount card files (will check if already exists)
+    const { pdfRelativePath, jpegRelativePath } = await generateDiscountCardForAgent(agent);
+    
+    // Save both paths to agent record
+    agent.discountCardPdf = pdfRelativePath;
+    agent.discountCardJpeg = jpegRelativePath;
+    await agent.save();
 
     const staticSenderDetails = {
       senderName: fullName || "Anthony Booker",
@@ -2209,6 +2250,28 @@ export const emailAgents = async (
       },
     ];
     emailCampaigns.htmlContent = htmlContent;
+
+    // Attach discount card PDF if available
+    if (agent.discountCardPdf) {
+      // Get project root (works in both dev and production)
+      const getProjectRoot = () => {
+        if (__dirname.includes(path.join("dist", "src"))) {
+          return path.join(__dirname, "../../../");
+        }
+        return path.join(__dirname, "../../");
+      };
+      const pdfPath = path.join(getProjectRoot(), agent.discountCardPdf);
+      if (fs.existsSync(pdfPath)) {
+        const pdfBuffer = fs.readFileSync(pdfPath);
+        const base64 = pdfBuffer.toString("base64");
+        (emailCampaigns as any).attachment = [
+          {
+            name: "discount-card.pdf",
+            content: base64,
+          },
+        ];
+      }
+    }
 
     const response = (await apiInstance.sendTransacEmail(
       emailCampaigns
