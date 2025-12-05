@@ -128,7 +128,7 @@ const buildCardHtml = (agent: IAgent, qrPublicUrl: string): string => {
         }
 
         .discount-code {
-            font-size: 36px;
+            font-size: 55px;
             font-weight: 700;
             color: #ab1c10;
             margin: 0;
@@ -157,6 +157,7 @@ const buildCardHtml = (agent: IAgent, qrPublicUrl: string): string => {
             font-weight: 700;
             color: #181656;
             margin: 0 0 14px;
+            text-align: center;
         }
 
         .activation-row {
@@ -175,6 +176,11 @@ const buildCardHtml = (agent: IAgent, qrPublicUrl: string): string => {
         .steps ol {
             margin: 0;
             padding-left: 22px;
+            line-height: 1.8;
+        }
+
+        .steps ol li {
+            margin-bottom: 8px;
         }
 
         .qr-wrapper {
