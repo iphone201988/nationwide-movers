@@ -1425,7 +1425,15 @@ export const sendSMS = async (req: Request, res: Response) => {
       });
     }
 
-    let message = body;
+    // Get message body - handle both 'body' and 'message' field names
+    let message = body || req.body.message || "";
+
+    if (!message) {
+      return res.status(400).json({
+        success: false,
+        message: "Message body is required",
+      });
+    }
 
     const countryCode = agent?.countryCode || "+1";
     const phoneNumber = agent?.phoneNumber?.replace(/\D/g, "") || "";
@@ -1449,8 +1457,47 @@ export const sendSMS = async (req: Request, res: Response) => {
       await agent.save();
 
       // Build public URL using /uploads static route
-      const jpegPublicPath = `/uploads/${jpegRelativePath.replace(/^src[\\/]/, "")}`.replace(/\\/g, "/");
-      mediaUrl = [`${process.env.BASE_URL || ""}${jpegPublicPath}`.replace(/\/+$/, "").replace(/(https?:\/\/)+/,'$1')];
+      // Remove any 'src/' prefix and normalize path separators
+      let cleanPath = jpegRelativePath.replace(/^src[\\/]/, "").replace(/\\/g, "/");
+      
+      // Ensure path starts with /uploads (not uploads/)
+      if (!cleanPath.startsWith("/uploads/")) {
+        if (cleanPath.startsWith("uploads/")) {
+          cleanPath = `/${cleanPath}`;
+        } else {
+          cleanPath = `/uploads/${cleanPath}`;
+        }
+      }
+      
+      // Build full URL - Twilio requires publicly accessible URL (must be http:// or https://)
+      const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || "http://18.223.150.51:8000";
+      
+      // Ensure baseUrl has protocol
+      let fullBaseUrl = baseUrl;
+      if (!fullBaseUrl.startsWith("http://") && !fullBaseUrl.startsWith("https://")) {
+        fullBaseUrl = `http://${fullBaseUrl}`;
+      }
+      
+      // Remove trailing slash from baseUrl and ensure cleanPath starts with /
+      const fullUrl = `${fullBaseUrl.replace(/\/+$/, "")}${cleanPath}`;
+      
+      console.log("📸 Media URL for Twilio:", fullUrl);
+      console.log("📸 JPEG Relative Path:", jpegRelativePath);
+      
+      // Check if URL is localhost - Twilio cannot access localhost URLs
+      if (fullUrl.includes("localhost") || fullUrl.includes("127.0.0.1")) {
+        console.warn("WARNING: Media URL is localhost. Twilio cannot access localhost URLs.");
+      } else {
+        // Validate URL format
+        try {
+          new URL(fullUrl); 
+          mediaUrl = [fullUrl];
+        } catch (error) {
+          console.error("Invalid media URL constructed:", fullUrl, error);
+          console.warn("Skipping MMS attachment - sending text-only SMS instead.");
+          // Don't throw error - send text-only SMS instead
+        }
+      }
     }
 
     const createOptions: any = {
@@ -1462,6 +1509,7 @@ export const sendSMS = async (req: Request, res: Response) => {
     if (mediaUrl && mediaUrl.length) {
       createOptions.mediaUrl = mediaUrl;
     }
+    console.log("createOptions", createOptions);
 
     const twilioResponse = await client.messages.create(createOptions);
 

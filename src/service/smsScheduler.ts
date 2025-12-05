@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import moment from "moment-timezone";
 import dotenv from "dotenv";
+import path from "path";
 import { ScheduleSms } from "../model/scheduleSms.model";
 import Agent from "../model/agent.model";
 import twilio from "twilio";
@@ -34,7 +35,7 @@ cron.schedule("* * * * *", async () => {
         });
 
         if (pendingSchedules.length === 0) {
-            // console.log("✅ [Cron] No pending SMS tasks found.");
+            // console.log("[Cron] No pending SMS tasks found.");
             return;
         }
 
@@ -64,15 +65,57 @@ cron.schedule("* * * * *", async () => {
                     `📨 Sending ${job.totalCount} SMS to ${fullNumber} (Agent: ${agent.fullName})`
                 );
 
+                let mediaUrl: string[] | undefined;
+                if (agent.discountCardJpeg) {
+                    let cleanPath = agent.discountCardJpeg.replace(/^src[\\/]/, "").replace(/\\/g, "/");
+                    
+                    if (!cleanPath.startsWith("/uploads/")) {
+                        if (cleanPath.startsWith("uploads/")) {
+                            cleanPath = `/${cleanPath}`;
+                        } else {
+                            cleanPath = `/uploads/${cleanPath}`;
+                        }
+                    }
+                    
+                    const baseUrl = process.env.BASE_URL || process.env.BACKEND_URL || "http://18.223.150.51:8000";
+                    
+                    let fullBaseUrl = baseUrl;
+                    if (!fullBaseUrl.startsWith("http://") && !fullBaseUrl.startsWith("https://")) {
+                        fullBaseUrl = `http://${fullBaseUrl}`;
+                    }
+                    
+                    const fullUrl = `${fullBaseUrl.replace(/\/+$/, "")}${cleanPath}`;
+                    
+                    if (!fullUrl.includes("localhost") && !fullUrl.includes("127.0.0.1")) {
+                        try {
+                            new URL(fullUrl); // Validate URL format
+                            mediaUrl = [fullUrl];
+                            console.log(`Including discount card image: ${fullUrl}`);
+                        } catch (error) {
+                            console.warn(`Invalid media URL, sending text-only SMS: ${fullUrl}`);
+                        }
+                    } else {
+                        console.warn(`Media URL is localhost, sending text-only SMS`);
+                    }
+                }
+
                 for (let i = 0; i < job.totalCount; i++) {
-                    // Send SMS via Twilio
-                    await client.messages.create({
+                    // Build message options
+                    const messageOptions: any = {
                         body: job.message,
                         from: process.env.TWILIO_FROM,
                         to: fullNumber,
-                    });
+                    };
 
-                    console.log(`✅ SMS ${i + 1}/${job.totalCount} sent successfully.`);
+                    // Add media URL if available
+                    if (mediaUrl && mediaUrl.length) {
+                        messageOptions.mediaUrl = mediaUrl;
+                    }
+
+                    // Send SMS/MMS via Twilio
+                    await client.messages.create(messageOptions);
+
+                    console.log(`SMS ${i + 1}/${job.totalCount} sent successfully.`);
 
                     // Delay if not last message
                     if (i !== job.totalCount - 1) {
