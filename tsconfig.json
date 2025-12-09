@@ -9,7 +9,8 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "types": ["node", "cors"]
+    "types": ["node", "cors"],
+    "typeRoots": ["./node_modules/@types", "./src/types"]
   },
   "lib": ["ES2020"]
 }
