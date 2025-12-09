@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import colors from "colors";
 import morgan from "morgan";
 import connectToMongoDB from "./src/config/Db";
+import cors from "cors";
 import * as path from "path";
 import { runTruliaScraper } from "./src/service/scapping";
 import { loadLocalHtmlWithPuppeteer, scrapWithScrapingBee } from "./src/service/details.scarpping";
@@ -21,6 +22,7 @@ connectToMongoDB();
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
