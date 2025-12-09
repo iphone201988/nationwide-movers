@@ -7,8 +7,9 @@
     "resolveJsonModule": true,
     "outDir": "dist",
     "skipLibCheck": true,
-     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "types": ["node", "cors"]
   },
   "lib": ["ES2020"]
 }

@@ -22,7 +22,27 @@ connectToMongoDB();
 
 const app = express();
 
-app.use(cors());
+// CORS configuration – allow specific origins
+const allowedOrigins = [
+    "http://nwmovers-scraping.com",
+    "http://nwmovers-scraping.com:8000",
+    "http://18.223.150.51",
+    "http://18.223.150.51:8000",
+];
+
+app.use(
+    cors({
+        origin: function (origin, callback) {
+            // Allow requests with no origin (like mobile apps or curl)
+            if (!origin) return callback(null, true);
+            if (allowedOrigins.indexOf(origin) !== -1) {
+                return callback(null, true);
+            }
+            return callback(new Error("Not allowed by CORS"), false);
+        },
+        credentials: true,
+    })
+);
 app.use(express.json());
 app.use(morgan("dev"));
 
