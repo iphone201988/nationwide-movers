@@ -8,6 +8,8 @@ import Listing from "../model/listing.model";
 import Agent from "../model/agent.model";
 import "dotenv/config";
 import { getLatLngFromAddress } from "./googleMap.service";
+import { generateUniqueDiscountCode } from "../utils/discountCodeGenerator";
+import { generateDiscountCardForAgent } from "./discountCard.service";
 
 const API_KEY = process.env.API_KEY_SCRAP_BEE;
 const BASE_URL = "https://app.scrapingbee.com/api/v1/";
@@ -141,8 +143,20 @@ const saveScrapedData = async (scrapedData: any) => {
                 console.warn("⚠️ Geocoding failed:", geoErr.message);
             }
 
+            // Ensure discount code exists
+            if (!agentDoc.discountCodeCoupon) {
+                agentDoc.discountCodeCoupon = await generateUniqueDiscountCode();
+            }
+
             await agentDoc.save();
-            console.log("✅ Agent saved:", agentDoc._id);
+
+            // Generate discount card (PDF/JPEG); function will skip if already valid
+            const { pdfRelativePath, jpegRelativePath } = await generateDiscountCardForAgent(agentDoc);
+            agentDoc.discountCardPdf = pdfRelativePath;
+            agentDoc.discountCardJpeg = jpegRelativePath;
+            await agentDoc.save();
+
+            console.log("✅ Agent saved with discount card:", agentDoc._id);
         }
         const existingListing = await Listing.findOne({
             title: scrapedData.title,

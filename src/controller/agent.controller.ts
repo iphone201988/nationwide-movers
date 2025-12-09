@@ -914,6 +914,17 @@ export const getAgentDetails = async (
       });
     }
 
+    // Ensure discount code and card exist
+    if (!agent.discountCodeCoupon) {
+      agent.discountCodeCoupon = await generateUniqueDiscountCode();
+    }
+    if (!agent.discountCardPdf || !agent.discountCardJpeg) {
+      const { pdfRelativePath, jpegRelativePath } = await generateDiscountCardForAgent(agent);
+      agent.discountCardPdf = pdfRelativePath;
+      agent.discountCardJpeg = jpegRelativePath;
+    }
+    await agent.save();
+
     agent.isView = true;
     await agent.save();
 
@@ -1919,6 +1930,8 @@ export const agentUpdate = async (
     }
     if (discountCodeCoupon) {
       agent.discountCodeCoupon = discountCodeCoupon;
+    } else {
+      agent.discountCodeCoupon = await generateUniqueDiscountCode();
     }
     if (raMailingAddress) {
       agent.raMailingAddress = raMailingAddress;
@@ -1949,11 +1962,24 @@ export const agentUpdate = async (
     agent.homeowner = homeowner ?? agent.homeowner;
 
 
+    // Ensure discount code exists
+    if (!agent.discountCodeCoupon) {
+      agent.discountCodeCoupon = await generateUniqueDiscountCode();
+    }
+
+    // Generate or refresh discount card (will skip if already valid)
+    const { pdfRelativePath, jpegRelativePath } = await generateDiscountCardForAgent(agent);
+    agent.discountCardPdf = pdfRelativePath;
+    agent.discountCardJpeg = jpegRelativePath;
+
     await agent.save();
 
     res.status(200).json({
       success: true,
       message: "agent updated successfully",
+      discountCardPdf: agent.discountCardPdf,
+      discountCardJpeg: agent.discountCardJpeg,
+      discountCodeCoupon: agent.discountCodeCoupon,
     });
   } catch (error) {
     console.log(error);
@@ -2100,11 +2126,20 @@ export const agentAdd = async (req: Request, res: Response): Promise<any> => {
     agent.listingInfo = Number(listingInfo) || 1;
     agent.additionalInfo = Number(additionalInfo) || 1;
 
-    await Agent.create(agent);
+    const createdAgent = await Agent.create(agent);
+
+    // Generate discount card (PDF and JPEG)
+    const { pdfRelativePath, jpegRelativePath } = await generateDiscountCardForAgent(createdAgent, true);
+    createdAgent.discountCardPdf = pdfRelativePath;
+    createdAgent.discountCardJpeg = jpegRelativePath;
+    await createdAgent.save();
 
     res.status(200).json({
       success: true,
-      message: "Agenet created successfully",
+      message: "Agent created successfully",
+      discountCardPdf: createdAgent.discountCardPdf,
+      discountCardJpeg: createdAgent.discountCardJpeg,
+      discountCodeCoupon: createdAgent.discountCodeCoupon,
     });
   } catch (error) {
     console.log(error);
