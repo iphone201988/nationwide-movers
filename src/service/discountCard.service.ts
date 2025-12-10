@@ -4,6 +4,7 @@ import puppeteer from "puppeteer";
 import sharp from "sharp";
 import { IAgent } from "../model/agent.model";
 import { ensureStaticQrCode } from "./qrCode.service";
+import os from "os";
 
 // Helper to get project root (works in both dev and production)
 const getProjectRoot = () => {
@@ -264,6 +265,41 @@ const buildCardHtml = (agent: IAgent, qrPublicUrl: string): string => {
 `;
 };
 
+// Resolve Chrome executable for Puppeteer, honoring env override and common locations.
+const resolvePuppeteerExecutable = () => {
+  if (process.env.PUPPETEER_EXECUTABLE_PATH && fs.existsSync(process.env.PUPPETEER_EXECUTABLE_PATH)) {
+    return process.env.PUPPETEER_EXECUTABLE_PATH;
+  }
+
+  try {
+    const managed = puppeteer.executablePath();
+    if (managed && fs.existsSync(managed)) return managed;
+  } catch (err) {
+    console.warn("⚠️ Could not read puppeteer managed executable:", (err as any)?.message);
+  }
+
+  const candidates: string[] = [];
+  if (process.platform === "win32") {
+    const localApp = process.env.LOCALAPPDATA || "";
+    const programFiles = process.env["PROGRAMFILES"] || "C:\\Program Files";
+    candidates.push(
+      path.join(programFiles, "Google/Chrome/Application/chrome.exe"),
+      path.join(localApp, "Google/Chrome/Application/chrome.exe")
+    );
+  } else if (process.platform === "darwin") {
+    candidates.push("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome");
+  } else {
+    candidates.push("/usr/bin/google-chrome", "/usr/bin/chromium-browser", "/usr/bin/chromium");
+  }
+
+  const found = candidates.find((p) => p && fs.existsSync(p));
+  if (found) return found;
+
+  throw new Error(
+    "No Chrome executable found. Install with `npx puppeteer browsers install chrome` or set PUPPETEER_EXECUTABLE_PATH."
+  );
+};
+
 /**
  * Generate or regenerate the discount card for an agent.
  * Checks if card already exists before generating.
@@ -311,8 +347,10 @@ export const generateDiscountCardForAgent = async (
 
   const html = buildCardHtml(agent, qrDataUrl);
 
+  const executablePath = resolvePuppeteerExecutable();
   const browser  = await puppeteer.launch({
     headless: true, // or 'new' depending on puppeteer version
+    executablePath,
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",

@@ -35,12 +35,40 @@ export const oauth2callback = async (req: Request, res: Response) => {
 };
 const getInbox = async (afterDateFormatted:string,beforeDateFormatted: string) => {
   try {
-    const tokens = JSON.parse(fs.readFileSync(TOKEN_PATH, "utf8"));
-    const { access_token, refresh_token } = tokens; 
-    if (!access_token || !refresh_token) {
-      throw new Error("Access token or refresh token not found.");
-    }
-    // console.log("Access Token:", access_token);
+    const loadTokens = () => JSON.parse(fs.readFileSync(TOKEN_PATH, "utf8"));
+
+    const persistTokens = (nextTokens: any) =>
+      fs.writeFileSync(TOKEN_PATH, JSON.stringify(nextTokens, null, 2));
+
+    const ensureValidTokens = async () => {
+      const tokens = loadTokens();
+      const { access_token, refresh_token, expiry_date } = tokens;
+
+      if (!refresh_token) throw new Error("Missing refresh token. Re-auth required.");
+
+      // If we still have a valid access token, reuse it
+      if (access_token && expiry_date && expiry_date > Date.now() + 60_000) {
+        return tokens;
+      }
+
+      // Refresh using stored refresh token
+      oAuth2Client.setCredentials({ refresh_token });
+      try {
+        const { credentials } = await oAuth2Client.refreshAccessToken();
+        const merged = { ...tokens, ...credentials };
+        persistTokens(merged);
+        return merged;
+      } catch (err: any) {
+        if (err?.response?.data?.error === "invalid_grant") {
+          throw new Error(
+            "Refresh token expired or revoked. Please re-run OAuth consent (GET /api/gmailAuth)."
+          );
+        }
+        throw err;
+      }
+    };
+
+    const { access_token, refresh_token } = await ensureValidTokens();
  
     const messages = await GmailMessageService.listInboxMessages({
       userId: "me",
@@ -48,11 +76,12 @@ const getInbox = async (afterDateFormatted:string,beforeDateFormatted: string) =
       refreshToken: refresh_token,
       maxResults: 100,
       onlyUnread: true,
-      fromEmail: "share-property@prop.trulia.com",
+      fromEmail: "from:share-property@prop.trulia.com OR from:abooker@nationwideusamovers.com",
         after: afterDateFormatted,
         before: beforeDateFormatted,
     });
     for (const message of messages) {
+      console.log(`Processing message ID: ${message.id}:`, message);
         const exist =await GmailListing.findOne({messageId: message.id,isScraped:true});
         if(exist) continue;
         if(message.seeMoreUrl){
@@ -79,6 +108,7 @@ const getInbox = async (afterDateFormatted:string,beforeDateFormatted: string) =
 
 // Schedule to run every day at 2 AM
 cron.schedule("0 8 * * *", async () => {
+  console.log("Cron job started for Gmail inbox scraping...");
      const afterDate = new Date();
     afterDate.setDate(afterDate.getDate() - 1); 
     const beforeDate = new Date();
@@ -90,3 +120,23 @@ cron.schedule("0 8 * * *", async () => {
 },);
 
 // getInbox();
+
+
+
+
+(async () => {
+  console.log("One-time Gmail inbox scraping started...");
+
+  const afterDate = new Date();
+  afterDate.setDate(afterDate.getDate() - 10);
+
+  const beforeDate = new Date();
+  beforeDate.setDate(beforeDate.getDate() + 2);
+
+  const afterDateFormatted = formatDateForGmail(afterDate);
+  const beforeDateFormatted = formatDateForGmail(beforeDate);
+
+  await getInbox(afterDateFormatted, beforeDateFormatted);
+
+  console.log("One-time Gmail inbox scraping finished.");
+})();

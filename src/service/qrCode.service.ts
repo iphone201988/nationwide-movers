@@ -29,16 +29,17 @@ export const ensureStaticQrCode = async (): Promise<string> => {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
 
-  // if (!fs.existsSync(filePath)) {
-  //   const QR_CONTENT = "https://nationwideusamovers.com"; // TODO: confirm with client
-  //   const pngBuffer = await QRCode.toBuffer(QR_CONTENT, {
-  //     type: "png",
-  //     errorCorrectionLevel: "H",
-  //     margin: 1,
-  //     scale: 8,
-  //   });
-  //   fs.writeFileSync(filePath, pngBuffer);
-  // }
+  if (!fs.existsSync(filePath)) {
+    // Default QR content; update when the final URL is confirmed.
+    const QR_CONTENT = process.env.DISCOUNT_QR_URL || "https://nationwideusamovers.com";
+    const pngBuffer = await QRCode.toBuffer(QR_CONTENT, {
+      type: "png",
+      errorCorrectionLevel: "H",
+      margin: 1,
+      scale: 8,
+    });
+    fs.writeFileSync(filePath, pngBuffer);
+  }
 
   return filePath;
 };

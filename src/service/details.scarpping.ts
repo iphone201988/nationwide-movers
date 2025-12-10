@@ -10,6 +10,7 @@ import "dotenv/config";
 import { getLatLngFromAddress } from "./googleMap.service";
 import { generateUniqueDiscountCode } from "../utils/discountCodeGenerator";
 import { generateDiscountCardForAgent } from "./discountCard.service";
+import os from "os";
 
 const API_KEY = process.env.API_KEY_SCRAP_BEE;
 const BASE_URL = "https://app.scrapingbee.com/api/v1/";
@@ -207,12 +208,53 @@ const saveScrapedData = async (scrapedData: any) => {
     }
 };
 
+// Resolve a Chrome/Chromium executable path. This avoids runtime failures when Puppeteer
+// cannot find its managed browser (e.g., cache not downloaded in production).
+const resolvePuppeteerExecutable = () => {
+  // 1) Honor explicit override
+  if (process.env.PUPPETEER_EXECUTABLE_PATH && fs.existsSync(process.env.PUPPETEER_EXECUTABLE_PATH)) {
+    return process.env.PUPPETEER_EXECUTABLE_PATH;
+  }
+
+  // 2) Puppeteer's managed download path (requires `npx puppeteer browsers install chrome`)
+  try {
+    const managed = puppeteer.executablePath();
+    if (managed && fs.existsSync(managed)) return managed;
+  } catch (err) {
+    console.warn("⚠️ Could not read puppeteer managed executable:", (err as any)?.message);
+  }
+
+  // 3) Common system Chrome paths (Windows/macOS/Linux)
+  const candidates: string[] = [];
+  if (process.platform === "win32") {
+    const localApp = process.env.LOCALAPPDATA || "";
+    const programFiles = process.env["PROGRAMFILES"] || "C:\\Program Files";
+    candidates.push(
+      path.join(programFiles, "Google/Chrome/Application/chrome.exe"),
+      path.join(localApp, "Google/Chrome/Application/chrome.exe")
+    );
+  } else if (process.platform === "darwin") {
+    candidates.push("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome");
+  } else {
+    candidates.push("/usr/bin/google-chrome", "/usr/bin/chromium-browser", "/usr/bin/chromium");
+  }
+
+  const found = candidates.find((p) => p && fs.existsSync(p));
+  if (found) return found;
+
+  throw new Error(
+    "No Chrome executable found. Install with `npx puppeteer browsers install chrome` or set PUPPETEER_EXECUTABLE_PATH."
+  );
+};
+
 export const loadLocalHtmlWithPuppeteer = async (localFilePath: string) => {
   let browser: Browser | null = null;
 
   try {
+    const executablePath = resolvePuppeteerExecutable();
     browser = await puppeteer.launch({
       headless: true, // or 'new' depending on puppeteer version
+      executablePath,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",

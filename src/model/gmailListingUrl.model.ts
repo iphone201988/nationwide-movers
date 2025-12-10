@@ -5,7 +5,7 @@ const GmailListingSchema = new Schema(
     {   messageId: { type: String, required: true,},
         url: { type: String, required: true },
         isScraped: { type: Boolean, default: false  },
-    }
+    },{ timestamps: true }
 );
 GmailListingSchema.index({ messageId: 1 });
 

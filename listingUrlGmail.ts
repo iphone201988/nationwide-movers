@@ -155,7 +155,8 @@ export class GmailMessageService {
 
       let query = "";
       if (onlyUnread && fromEmail) {
-        query = `from:${fromEmail} is:unread `;
+        // query = `${fromEmail}`;
+        query = `${fromEmail} is:unread `;
       }
       // after:2025/11/26 before:2025/11/28
       if (after) {
