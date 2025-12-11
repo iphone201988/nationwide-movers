@@ -123,6 +123,22 @@ const saveScrapedData = async (scrapedData: any) => {
                     countryCode: "+1",
                     isView: false,
                 });
+                // Ensure discount code exists
+                if (!agentDoc.discountCodeCoupon) {
+                    agentDoc.discountCodeCoupon = await generateUniqueDiscountCode();
+                }
+
+                await agentDoc.save();
+
+                // Generate discount card (PDF/JPEG); function will skip if already valid
+                const { pdfRelativePath, jpegRelativePath } = await generateDiscountCardForAgent(agentDoc);
+                agentDoc.discountCardPdf = pdfRelativePath;
+                agentDoc.discountCardJpeg = jpegRelativePath;
+                await agentDoc.save();
+
+                console.log("✅ Agent saved with discount card:", agentDoc._id);
+
+
             } else {
                 // Update existing agent
                 agentDoc.fullName = agentInfo.name || agentDoc.fullName;
@@ -144,25 +160,13 @@ const saveScrapedData = async (scrapedData: any) => {
                 console.warn("⚠️ Geocoding failed:", geoErr.message);
             }
 
-            // Ensure discount code exists
-            if (!agentDoc.discountCodeCoupon) {
-                agentDoc.discountCodeCoupon = await generateUniqueDiscountCode();
-            }
 
-            await agentDoc.save();
-
-            // Generate discount card (PDF/JPEG); function will skip if already valid
-            const { pdfRelativePath, jpegRelativePath } = await generateDiscountCardForAgent(agentDoc);
-            agentDoc.discountCardPdf = pdfRelativePath;
-            agentDoc.discountCardJpeg = jpegRelativePath;
-            await agentDoc.save();
-
-            console.log("✅ Agent saved with discount card:", agentDoc._id);
         }
         const existingListing = await Listing.findOne({
             title: scrapedData.title,
             address: scrapedData.address,
-            price: scrapedData.price,});
+            price: scrapedData.price,
+        });
 
         if (existingListing) {
             existingListing.agentId = agentDoc ? agentDoc._id : existingListing.agentId;
@@ -179,29 +183,29 @@ const saveScrapedData = async (scrapedData: any) => {
 
             console.log("ℹ️ Listing already exists, skipping creation:", existingListing._id);
             return { listing: existingListing, agent: agentDoc };
-        }else{
-        // Always create a new listing
-        const listingDoc = new Listing({
-            title: scrapedData.title,
-            price: scrapedData.price,
-            address: scrapedData.address,
-            beds: scrapedData.beds,
-            baths: scrapedData.baths,
-            floor: scrapedData.floor,
-            description: scrapedData.description,
-            homeHighlights: scrapedData.homeHighlights,
-            features: scrapedData.features,
-            communityDescription: scrapedData.communityDescription,
-            officeDetails: scrapedData.officeDetails,
-            images: scrapedData.images,
-            agentId: agentDoc ? agentDoc._id : undefined,
-        });
+        } else {
+            // Always create a new listing
+            const listingDoc = new Listing({
+                title: scrapedData.title,
+                price: scrapedData.price,
+                address: scrapedData.address,
+                beds: scrapedData.beds,
+                baths: scrapedData.baths,
+                floor: scrapedData.floor,
+                description: scrapedData.description,
+                homeHighlights: scrapedData.homeHighlights,
+                features: scrapedData.features,
+                communityDescription: scrapedData.communityDescription,
+                officeDetails: scrapedData.officeDetails,
+                images: scrapedData.images,
+                agentId: agentDoc ? agentDoc._id : undefined,
+            });
 
-        await listingDoc.save();
-        console.log("✅ Listing saved with Agent:", listingDoc._id);
+            await listingDoc.save();
+            console.log("✅ Listing saved with Agent:", listingDoc._id);
 
-        return { listing: listingDoc, agent: agentDoc };
-    }
+            return { listing: listingDoc, agent: agentDoc };
+        }
     } catch (err) {
         console.error("💥 Error saving scraped data:", err);
         throw err;
@@ -211,114 +215,114 @@ const saveScrapedData = async (scrapedData: any) => {
 // Resolve a Chrome/Chromium executable path. This avoids runtime failures when Puppeteer
 // cannot find its managed browser (e.g., cache not downloaded in production).
 const resolvePuppeteerExecutable = () => {
-  // 1) Honor explicit override
-  if (process.env.PUPPETEER_EXECUTABLE_PATH && fs.existsSync(process.env.PUPPETEER_EXECUTABLE_PATH)) {
-    return process.env.PUPPETEER_EXECUTABLE_PATH;
-  }
+    // 1) Honor explicit override
+    if (process.env.PUPPETEER_EXECUTABLE_PATH && fs.existsSync(process.env.PUPPETEER_EXECUTABLE_PATH)) {
+        return process.env.PUPPETEER_EXECUTABLE_PATH;
+    }
 
-  // 2) Puppeteer's managed download path (requires `npx puppeteer browsers install chrome`)
-  try {
-    const managed = puppeteer.executablePath();
-    if (managed && fs.existsSync(managed)) return managed;
-  } catch (err) {
-    console.warn("⚠️ Could not read puppeteer managed executable:", (err as any)?.message);
-  }
+    // 2) Puppeteer's managed download path (requires `npx puppeteer browsers install chrome`)
+    try {
+        const managed = puppeteer.executablePath();
+        if (managed && fs.existsSync(managed)) return managed;
+    } catch (err) {
+        console.warn("⚠️ Could not read puppeteer managed executable:", (err as any)?.message);
+    }
 
-  // 3) Common system Chrome paths (Windows/macOS/Linux)
-  const candidates: string[] = [];
-  if (process.platform === "win32") {
-    const localApp = process.env.LOCALAPPDATA || "";
-    const programFiles = process.env["PROGRAMFILES"] || "C:\\Program Files";
-    candidates.push(
-      path.join(programFiles, "Google/Chrome/Application/chrome.exe"),
-      path.join(localApp, "Google/Chrome/Application/chrome.exe")
+    // 3) Common system Chrome paths (Windows/macOS/Linux)
+    const candidates: string[] = [];
+    if (process.platform === "win32") {
+        const localApp = process.env.LOCALAPPDATA || "";
+        const programFiles = process.env["PROGRAMFILES"] || "C:\\Program Files";
+        candidates.push(
+            path.join(programFiles, "Google/Chrome/Application/chrome.exe"),
+            path.join(localApp, "Google/Chrome/Application/chrome.exe")
+        );
+    } else if (process.platform === "darwin") {
+        candidates.push("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome");
+    } else {
+        candidates.push("/usr/bin/google-chrome", "/usr/bin/chromium-browser", "/usr/bin/chromium");
+    }
+
+    const found = candidates.find((p) => p && fs.existsSync(p));
+    if (found) return found;
+
+    throw new Error(
+        "No Chrome executable found. Install with `npx puppeteer browsers install chrome` or set PUPPETEER_EXECUTABLE_PATH."
     );
-  } else if (process.platform === "darwin") {
-    candidates.push("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome");
-  } else {
-    candidates.push("/usr/bin/google-chrome", "/usr/bin/chromium-browser", "/usr/bin/chromium");
-  }
-
-  const found = candidates.find((p) => p && fs.existsSync(p));
-  if (found) return found;
-
-  throw new Error(
-    "No Chrome executable found. Install with `npx puppeteer browsers install chrome` or set PUPPETEER_EXECUTABLE_PATH."
-  );
 };
 
 export const loadLocalHtmlWithPuppeteer = async (localFilePath: string) => {
-  let browser: Browser | null = null;
-
-  try {
-    const executablePath = resolvePuppeteerExecutable();
-    browser = await puppeteer.launch({
-      headless: true, // or 'new' depending on puppeteer version
-      executablePath,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-        "--disable-features=IsolateOrigins,site-per-process",
-        "--disable-features=VizDisplayCompositor",
-      ],
-    });
-
-    const page: Page = await browser.newPage();
-
-    console.log("🌐 Injecting local HTML content...");
-
-    const html = fs.readFileSync(localFilePath, "utf-8");
-
-    await page.setContent(html, { waitUntil: "domcontentloaded" });
-
-    await autoScroll(page);
-
-    const outputFile = "scrolled_local_result.html";
-
-    if (fs.existsSync(outputFile)) {
-      console.log("🗑️ Removed previous saved HTML");
-      fs.unlinkSync(outputFile);
-    }
-
-    const finalHtml = await page.content();
-    fs.writeFileSync(outputFile, finalHtml, "utf-8");
-    console.log("💾 Saved new scrolled local HTML result:", outputFile);
-
-    const galleryImages = await scrapeGalleryImages(page);
-    const scrapedData = await scrapePropertyData(outputFile);
-
-    scrapedData.images = galleryImages;
+    let browser: Browser | null = null;
 
     try {
-      await saveScrapedData(scrapedData);
-    } catch (error) {
-      console.error("💥 Error saving scraped data to DB:", error);
-    }
+        const executablePath = resolvePuppeteerExecutable();
+        browser = await puppeteer.launch({
+            headless: true, // or 'new' depending on puppeteer version
+            executablePath,
+            args: [
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--disable-features=IsolateOrigins,site-per-process",
+                "--disable-features=VizDisplayCompositor",
+            ],
+        });
 
-    // delete temp local file
-    try {
-      fs.unlinkSync(localFilePath);
-    } catch (error) {
-      console.error("💥 Error deleting local file:", error);
-    }
+        const page: Page = await browser.newPage();
 
-  } catch (err: any) {
-    console.error("💥 Puppeteer failed:", err.message);
-  } finally {
-    if (browser) {
-      await browser.close();
+        console.log("🌐 Injecting local HTML content...");
+
+        const html = fs.readFileSync(localFilePath, "utf-8");
+
+        await page.setContent(html, { waitUntil: "domcontentloaded" });
+
+        await autoScroll(page);
+
+        const outputFile = "scrolled_local_result.html";
+
+        if (fs.existsSync(outputFile)) {
+            console.log("🗑️ Removed previous saved HTML");
+            fs.unlinkSync(outputFile);
+        }
+
+        const finalHtml = await page.content();
+        fs.writeFileSync(outputFile, finalHtml, "utf-8");
+        console.log("💾 Saved new scrolled local HTML result:", outputFile);
+
+        const galleryImages = await scrapeGalleryImages(page);
+        const scrapedData = await scrapePropertyData(outputFile);
+
+        scrapedData.images = galleryImages;
+
+        try {
+            await saveScrapedData(scrapedData);
+        } catch (error) {
+            console.error("💥 Error saving scraped data to DB:", error);
+        }
+
+        // delete temp local file
+        try {
+            fs.unlinkSync(localFilePath);
+        } catch (error) {
+            console.error("💥 Error deleting local file:", error);
+        }
+
+    } catch (err: any) {
+        console.error("💥 Puppeteer failed:", err.message);
+    } finally {
+        if (browser) {
+            await browser.close();
+        }
+        // double-safety: if file still exists, clean it
+        try {
+            if (fs.existsSync(localFilePath)) {
+                fs.unlinkSync(localFilePath);
+            }
+        } catch (error) {
+            console.error("💥 Error deleting local file in finally:", error);
+        }
     }
-    // double-safety: if file still exists, clean it
-    try {
-      if (fs.existsSync(localFilePath)) {
-        fs.unlinkSync(localFilePath);
-      }
-    } catch (error) {
-      console.error("💥 Error deleting local file in finally:", error);
-    }
-  }
 };
 
 // export const scrapePropertyData = async (htmlFilePath: string) => {

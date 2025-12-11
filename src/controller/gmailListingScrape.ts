@@ -124,19 +124,19 @@ cron.schedule("0 8 * * *", async () => {
 
 
 
-(async () => {
-  console.log("One-time Gmail inbox scraping started...");
+// (async () => {
+//   console.log("One-time Gmail inbox scraping started...");
 
-  const afterDate = new Date();
-  afterDate.setDate(afterDate.getDate() - 10);
+//   const afterDate = new Date();
+//   afterDate.setDate(afterDate.getDate() - 10);
 
-  const beforeDate = new Date();
-  beforeDate.setDate(beforeDate.getDate() + 2);
+//   const beforeDate = new Date();
+//   beforeDate.setDate(beforeDate.getDate() + 2);
 
-  const afterDateFormatted = formatDateForGmail(afterDate);
-  const beforeDateFormatted = formatDateForGmail(beforeDate);
+//   const afterDateFormatted = formatDateForGmail(afterDate);
+//   const beforeDateFormatted = formatDateForGmail(beforeDate);
 
-  await getInbox(afterDateFormatted, beforeDateFormatted);
+//   await getInbox(afterDateFormatted, beforeDateFormatted);
 
-  console.log("One-time Gmail inbox scraping finished.");
-})();
+//   console.log("One-time Gmail inbox scraping finished.");
+// })();

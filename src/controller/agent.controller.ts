@@ -917,13 +917,17 @@ export const getAgentDetails = async (
     // Ensure discount code and card exist
     if (!agent.discountCodeCoupon) {
       agent.discountCodeCoupon = await generateUniqueDiscountCode();
+      const { pdfRelativePath, jpegRelativePath } = await generateDiscountCardForAgent(agent);
+      agent.discountCardPdf = pdfRelativePath;
+      agent.discountCardJpeg = jpegRelativePath;
+      await agent.save();
     }
     if (!agent.discountCardPdf || !agent.discountCardJpeg) {
       const { pdfRelativePath, jpegRelativePath } = await generateDiscountCardForAgent(agent);
       agent.discountCardPdf = pdfRelativePath;
       agent.discountCardJpeg = jpegRelativePath;
+      await agent.save();
     }
-    await agent.save();
 
     agent.isView = true;
     await agent.save();
@@ -1928,11 +1932,33 @@ export const agentUpdate = async (
     if (closestCity) {
       agent.closestCity = closestCity;
     }
-    if (discountCodeCoupon) {
-      agent.discountCodeCoupon = discountCodeCoupon;
-    } else {
-      agent.discountCodeCoupon = await generateUniqueDiscountCode();
-    }
+    if (discountCodeCoupon || !agent.discountCodeCoupon) {
+      agent.discountCodeCoupon = discountCodeCoupon || await generateUniqueDiscountCode();
+      // delete old discount card pdf and jpeg and create new one with update discount code
+      if (agent.discountCardPdf) {
+        try {
+          fs.unlinkSync(agent.discountCardPdf);
+        } catch (error) {
+          console.log("error deleting discount card pdf", error);
+          
+        }
+      }
+      if (agent.discountCardJpeg) {
+       try {
+         fs.unlinkSync(agent.discountCardJpeg);
+       } catch (error) {
+        console.log("error deleting discount card jpeg", error);
+        
+       }
+      }
+      agent.discountCardPdf = "";
+      agent.discountCardJpeg = "";
+      await agent.save();
+      const { pdfRelativePath, jpegRelativePath } = await generateDiscountCardForAgent(agent);
+      agent.discountCardPdf = pdfRelativePath;
+      agent.discountCardJpeg = jpegRelativePath;
+      await agent.save();
+    } 
     if (raMailingAddress) {
       agent.raMailingAddress = raMailingAddress;
     }
@@ -2091,7 +2117,7 @@ export const agentAdd = async (req: Request, res: Response): Promise<any> => {
       agent.closestCity = closestCity;
     }
     if (discountCodeCoupon) {
-      agent.discountCodeCoupon = discountCodeCoupon;
+      agent.discountCodeCoupon = discountCodeCoupon || await generateUniqueDiscountCode();
     }
     if (raMailingAddress) {
       agent.raMailingAddress = raMailingAddress;
